@@ -7,13 +7,13 @@ TEST_CASE("JSONTokenizer handles structural tokens", "[tokenizer]") {
   JSONTokenizer tokenizer;
   auto tokens = tokenizer.tokenize("{}[],:");
 
-  REQUIRE(tokens.size() == 6);
-  REQUIRE(tokens[0].type == TokenType::LeftBrace);
-  REQUIRE(tokens[1].type == TokenType::RightBrace);
-  REQUIRE(tokens[2].type == TokenType::LeftBracket);
-  REQUIRE(tokens[3].type == TokenType::RightBracket);
-  REQUIRE(tokens[4].type == TokenType::Comma);
-  REQUIRE(tokens[5].type == TokenType::Colon);
+  CHECK(tokens.size() == 6);
+  CHECK(tokens[0].type == TokenType::LeftBrace);
+  CHECK(tokens[1].type == TokenType::RightBrace);
+  CHECK(tokens[2].type == TokenType::LeftBracket);
+  CHECK(tokens[3].type == TokenType::RightBracket);
+  CHECK(tokens[4].type == TokenType::Comma);
+  CHECK(tokens[5].type == TokenType::Colon);
 }
 
 TEST_CASE("JSONTokenizer handles strings", "[tokenizer]") {
@@ -21,24 +21,24 @@ TEST_CASE("JSONTokenizer handles strings", "[tokenizer]") {
 
   SECTION("Simple string") {
     auto tokens = tokenizer.tokenize(R"("Hello, World!")");
-    REQUIRE(tokens.size() == 1);
-    REQUIRE(tokens[0].type == TokenType::String);
-    REQUIRE(tokens[0].value == "Hello, World!");
+    CHECK(tokens.size() == 1);
+    CHECK(tokens[0].type == TokenType::String);
+    CHECK(tokens[0].value == "Hello, World!");
   }
 
   SECTION("String with escape sequences") {
     auto tokens = tokenizer.tokenize(R"("\"\\\/\b\f\n\r\t")");
-    REQUIRE(tokens.size() == 1);
-    REQUIRE(tokens[0].type == TokenType::String);
-    REQUIRE(tokens[0].value == "\"\\/\b\f\n\r\t");
+    CHECK(tokens.size() == 1);
+    CHECK(tokens[0].type == TokenType::String);
+    CHECK(tokens[0].value == "\"\\/\b\f\n\r\t");
   }
 
   SECTION("String with Unicode escape") {
     auto tokens = tokenizer.tokenize(R"("\u00A9")");
-    REQUIRE(tokens.size() == 1);
-    REQUIRE(tokens[0].type == TokenType::String);
-    REQUIRE(tokens[0].value ==
-            "\\u00A9"); // Note: Actual Unicode handling not implemented
+    CHECK(tokens.size() == 1);
+    CHECK(tokens[0].type == TokenType::String);
+    CHECK(tokens[0].value ==
+          "\\u00A9"); // Note: Actual Unicode handling not implemented
   }
 }
 
@@ -47,37 +47,37 @@ TEST_CASE("JSONTokenizer handles numbers", "[tokenizer]") {
 
   SECTION("Integer") {
     auto tokens = tokenizer.tokenize("123");
-    REQUIRE(tokens.size() == 1);
-    REQUIRE(tokens[0].type == TokenType::Number);
-    REQUIRE(tokens[0].value == "123");
+    CHECK(tokens.size() == 1);
+    CHECK(tokens[0].type == TokenType::Number);
+    CHECK(tokens[0].value == "123");
   }
 
   SECTION("Negative integer") {
     auto tokens = tokenizer.tokenize("-456");
-    REQUIRE(tokens.size() == 1);
-    REQUIRE(tokens[0].type == TokenType::Number);
-    REQUIRE(tokens[0].value == "-456");
+    CHECK(tokens.size() == 1);
+    CHECK(tokens[0].type == TokenType::Number);
+    CHECK(tokens[0].value == "-456");
   }
 
   SECTION("Fraction") {
     auto tokens = tokenizer.tokenize("123.456");
-    REQUIRE(tokens.size() == 1);
-    REQUIRE(tokens[0].type == TokenType::Number);
-    REQUIRE(tokens[0].value == "123.456");
+    CHECK(tokens.size() == 1);
+    CHECK(tokens[0].type == TokenType::Number);
+    CHECK(tokens[0].value == "123.456");
   }
 
   SECTION("Exponent") {
     auto tokens = tokenizer.tokenize("1e-10");
-    REQUIRE(tokens.size() == 1);
-    REQUIRE(tokens[0].type == TokenType::Number);
-    REQUIRE(tokens[0].value == "1e-10");
+    CHECK(tokens.size() == 1);
+    CHECK(tokens[0].type == TokenType::Number);
+    CHECK(tokens[0].value == "1e-10");
   }
 
   SECTION("Fraction and exponent") {
     auto tokens = tokenizer.tokenize("123.456e+78");
-    REQUIRE(tokens.size() == 1);
-    REQUIRE(tokens[0].type == TokenType::Number);
-    REQUIRE(tokens[0].value == "123.456e+78");
+    CHECK(tokens.size() == 1);
+    CHECK(tokens[0].type == TokenType::Number);
+    CHECK(tokens[0].value == "123.456e+78");
   }
 }
 
@@ -86,20 +86,20 @@ TEST_CASE("JSONTokenizer handles keywords", "[tokenizer]") {
 
   SECTION("True") {
     auto tokens = tokenizer.tokenize("true");
-    REQUIRE(tokens.size() == 1);
-    REQUIRE(tokens[0].type == TokenType::True);
+    CHECK(tokens.size() == 1);
+    CHECK(tokens[0].type == TokenType::True);
   }
 
   SECTION("False") {
     auto tokens = tokenizer.tokenize("false");
-    REQUIRE(tokens.size() == 1);
-    REQUIRE(tokens[0].type == TokenType::False);
+    CHECK(tokens.size() == 1);
+    CHECK(tokens[0].type == TokenType::False);
   }
 
   SECTION("Null") {
     auto tokens = tokenizer.tokenize("null");
-    REQUIRE(tokens.size() == 1);
-    REQUIRE(tokens[0].type == TokenType::Null);
+    CHECK(tokens.size() == 1);
+    CHECK(tokens[0].type == TokenType::Null);
   }
 }
 
@@ -107,9 +107,9 @@ TEST_CASE("JSONTokenizer handles whitespace", "[tokenizer]") {
   JSONTokenizer tokenizer;
   auto tokens = tokenizer.tokenize(" \n\r\t{ \n\r\t} \n\r\t");
 
-  REQUIRE(tokens.size() == 2);
-  REQUIRE(tokens[0].type == TokenType::LeftBrace);
-  REQUIRE(tokens[1].type == TokenType::RightBrace);
+  CHECK(tokens.size() == 2);
+  CHECK(tokens[0].type == TokenType::LeftBrace);
+  CHECK(tokens[1].type == TokenType::RightBrace);
 }
 
 TEST_CASE("JSONTokenizer handles complex JSON", "[tokenizer]") {
@@ -131,7 +131,7 @@ TEST_CASE("JSONTokenizer handles complex JSON", "[tokenizer]") {
 
   auto tokens = tokenizer.tokenize(json);
 
-  REQUIRE(tokens.size() == 46);
+  CHECK(tokens.size() == 46);
   // Further assertions can be added to check specific tokens
 }
 
@@ -139,30 +139,30 @@ TEST_CASE("JSONTokenizer handles error cases", "[tokenizer]") {
   JSONTokenizer tokenizer;
 
   SECTION("Unterminated string") {
-    REQUIRE_THROWS_AS(tokenizer.tokenize("\"unterminated"), JSONTokenizerError);
+    CHECK_THROWS_AS(tokenizer.tokenize("\"unterminated"), JSONTokenizerError);
   }
 
   SECTION("Invalid escape sequence") {
-    REQUIRE_THROWS_AS(tokenizer.tokenize("\"\\x\""), JSONTokenizerError);
+    CHECK_THROWS_AS(tokenizer.tokenize("\"\\x\""), JSONTokenizerError);
   }
 
   SECTION("Invalid number format") {
-    REQUIRE_THROWS_AS(tokenizer.tokenize("12.34.56"), JSONTokenizerError);
+    CHECK_THROWS_AS(tokenizer.tokenize("12.34.56"), JSONTokenizerError);
   }
 
   SECTION("Invalid token") {
-    REQUIRE_THROWS_AS(tokenizer.tokenize("invalid"), JSONTokenizerError);
+    CHECK_THROWS_AS(tokenizer.tokenize("invalid"), JSONTokenizerError);
   }
 
   SECTION("Incomplete true") {
-    REQUIRE_THROWS_AS(tokenizer.tokenize("tru"), JSONTokenizerError);
+    CHECK_THROWS_AS(tokenizer.tokenize("tru"), JSONTokenizerError);
   }
 
   SECTION("Incomplete false") {
-    REQUIRE_THROWS_AS(tokenizer.tokenize("fals"), JSONTokenizerError);
+    CHECK_THROWS_AS(tokenizer.tokenize("fals"), JSONTokenizerError);
   }
 
   SECTION("Incomplete null") {
-    REQUIRE_THROWS_AS(tokenizer.tokenize("nul"), JSONTokenizerError);
+    CHECK_THROWS_AS(tokenizer.tokenize("nul"), JSONTokenizerError);
   }
 }
