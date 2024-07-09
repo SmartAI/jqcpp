@@ -11,7 +11,7 @@ enum class TokenType {
   RightBracket,
   Comma,
   Colon,
-  Strinig,
+  String,
   Number,
   True,
   False,
