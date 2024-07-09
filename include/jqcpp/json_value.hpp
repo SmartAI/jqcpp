@@ -26,11 +26,34 @@ struct JSONValue {
   JSONValue(JSONObject v) : value(std::make_unique<JSONObject>(std::move(v))) {}
 
   // copy
-  // TODO:
-  JSONValue(const JSONValue &other) : value(nullptr) {}
+  JSONValue(const JSONValue &other) : value(nullptr) {
+    // if value is array
+    if (const auto *arr =
+            std::get_if<std::unique_ptr<JSONArray>>(&other.value)) {
+      value = std::make_unique<JSONObject>(**arr);
+    }
+    // object
+    else if (const auto *arr =
+                 std::get_if<std::unique_ptr<JSONObject>>(&other.value)) {
+
+      value = std::make_unique<JSONObject>(**arr);
+    }
+    // other
+    else {
+      value = other.value;
+    }
+  }
   JSONValue &operator=(const JSONValue &other) {
     if (this != &other) {
-      // TODO: do something
+      if (const auto *arr =
+              std::get_if<std::unique_ptr<JSONArray>>(&other.value)) {
+        value = std::make_unique<JSONArray>(**arr);
+      } else if (const auto *obj =
+                     std::get_if<std::unique_ptr<JSONObject>>(&other.value)) {
+        value = std::make_unique<JSONObject>(**obj);
+      } else {
+        value = other.value;
+      }
     }
 
     return *this;
