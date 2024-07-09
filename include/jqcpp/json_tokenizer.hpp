@@ -26,13 +26,25 @@ struct Token {
 
 class JSONTokenizer {
 public:
-  std::vector<std::string> tokenize(const std::string &json_string);
+  std::vector<Token> tokenize(const std::string &json_string);
 
 private:
-  bool is_whilespace(char c);
-  bool is_digit(char c);
-  std::string parse_string(const std::string &json_string, size_t &i);
-  std::string parse_number(const std::string &json_string, size_t &i);
+  std::string::const_iterator it;
+  std::string::const_iterator end;
+
+  Token next_token();
+  Token parse_string();
+  Token parse_number();
+  Token parse_true();
+  Token parse_false();
+  Token parse_null();
+  void skip_whitespace();
+  char peek() const { return (it != end) ? *it : '\0'; }
+  char get() { return (it != end) ? *it++ : '\0'; }
+  bool is_digit(char c) const { return c >= '0' && c <= '9'; }
+  bool is_hex_digit(char c) const {
+    return is_digit(c) || (c >= 'a' && c <= 'f') || (c >= 'A' && c <= 'F');
+  }
 };
 
 class JSONTokenizerError : public std::runtime_error {
