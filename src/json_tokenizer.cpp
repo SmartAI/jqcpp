@@ -10,7 +10,12 @@ std::vector<Token> JSONTokenizer::tokenize(const std::string &json_string) {
 
   // begin parsing
   while (it != end) {
-    tokens.push_back(next_token());
+    auto token = next_token();
+    // the end of input
+    if (token.type == TokenType::EndOfInput) {
+      break;
+    }
+    tokens.push_back(token);
   }
   return tokens;
 }
@@ -18,7 +23,8 @@ std::vector<Token> JSONTokenizer::tokenize(const std::string &json_string) {
 Token JSONTokenizer::next_token() {
   skip_whitespace();
   if (it == end) {
-    throw JSONTokenizerError("Invalid sequence");
+    // end of input
+    return Token(TokenType::EndOfInput, "");
   }
   char c = peek();
   switch (c) {
@@ -66,7 +72,7 @@ Token JSONTokenizer::next_token() {
 }
 
 void JSONTokenizer::skip_whitespace() {
-  while (it != end && std::isspace(*it)) {
+  while ((it != end) && std::isspace(*it)) {
     ++it;
   }
 }

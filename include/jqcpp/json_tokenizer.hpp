@@ -15,7 +15,8 @@ enum class TokenType {
   Number,
   True,
   False,
-  Null
+  Null,
+  EndOfInput
 };
 
 struct Token {
