@@ -1,7 +1,6 @@
 #pragma once
 #include "json_tokenizer.hpp"
 #include "json_value.hpp"
-#include <memory>
 #include <stdexcept>
 #include <string>
 #include <vector>
