@@ -37,8 +37,7 @@ TEST_CASE("JSONTokenizer handles strings", "[tokenizer]") {
     auto tokens = tokenizer.tokenize(R"("\u00A9")");
     CHECK(tokens.size() == 1);
     CHECK(tokens[0].type == TokenType::String);
-    CHECK(tokens[0].value ==
-          "\\u00A9"); // Note: Actual Unicode handling not implemented
+    CHECK(tokens[0].value == "\\u00A9");
   }
 }
 
@@ -131,8 +130,7 @@ TEST_CASE("JSONTokenizer handles complex JSON", "[tokenizer]") {
 
   auto tokens = tokenizer.tokenize(json);
 
-  CHECK(tokens.size() == 46);
-  // Further assertions can be added to check specific tokens
+  CHECK(tokens.size() == 59);
 }
 
 TEST_CASE("JSONTokenizer handles error cases", "[tokenizer]") {

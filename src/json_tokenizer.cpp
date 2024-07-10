@@ -79,7 +79,8 @@ void JSONTokenizer::skip_whitespace() {
 
 Token JSONTokenizer::parse_null() {
   std::string value;
-  for (auto c : "null") {
+  std::string_view expected = "null";
+  for (char c : expected) {
     if (get() != c) {
       throw JSONTokenizerError("Invalid token: expected 'null'");
     }
@@ -90,7 +91,8 @@ Token JSONTokenizer::parse_null() {
 
 Token JSONTokenizer::parse_false() {
   std::string value;
-  for (auto c : "false") {
+  std::string_view expected = "false";
+  for (char c : expected) {
     if (get() != c) {
       throw JSONTokenizerError("Invalid token: expected 'false'");
     }
@@ -101,7 +103,8 @@ Token JSONTokenizer::parse_false() {
 
 Token JSONTokenizer::parse_true() {
   std::string value;
-  for (auto c : "true") {
+  std::string_view expected = "true";
+  for (char c : expected) {
     if (get() != c) {
       throw JSONTokenizerError("Invalid token: expected 'true'");
     }
