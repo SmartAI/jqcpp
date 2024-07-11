@@ -29,15 +29,26 @@ target_link_libraries(test_json_tokenizer PRIVATE Catch2::Catch2WithMain)
 add_executable(test_json_parser tests/test_json_parser.cpp src/json_parser.cpp src/json_tokenizer.cpp)
 target_link_libraries(test_json_parser PRIVATE Catch2::Catch2WithMain)
 
+# JSON Parser test
+add_executable(test_pretty_printer tests/test_pretty_printer.cpp src/json_parser.cpp src/json_tokenizer.cpp src/pretty_printer.cpp)
+target_link_libraries(test_pretty_printer PRIVATE Catch2::Catch2WithMain)
+
+
+#  The app
+add_executable(jqcpp src/json_parser.cpp src/json_tokenizer.cpp src/pretty_printer.cpp app/main.cpp)
+
 # Enable testing
 enable_testing()
 add_test(NAME json_tokenizer_test COMMAND test_json_tokenizer)
 add_test(NAME json_parser_test COMMAND test_json_parser)
+add_test(NAME json_pretty_printer COMMAND test_pretty_printer)
 
 # Add a custom target to run all tests
 add_custom_target(run_tests
     COMMAND ${CMAKE_CTEST_COMMAND} --output-on-failure
-    DEPENDS test_json_tokenizer test_json_parser
+    DEPENDS test_json_tokenizer 
+            test_json_parser 
+            test_pretty_printer
 )
 
 # Installation rules
