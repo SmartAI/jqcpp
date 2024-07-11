@@ -6,6 +6,7 @@
 #include "jqcpp/pretty_printer.hpp"
 #include "jqcpp/json_value.hpp"
 #include <iomanip>
+#include <limits>
 #include <sstream>
 
 namespace jqcpp {
@@ -25,7 +26,8 @@ std::string JSONPrinter::print(const JSONValue &value, int indent) {
     return value.get_bool() ? "true" : "false";
   } else if (value.is_number()) {
     std::ostringstream oss;
-    oss << std::setprecision(15) << value.get_number();
+    oss << std::setprecision(std::numeric_limits<double>::max_digits10)
+        << value.get_number();
     return oss.str();
   } else if (value.is_string()) {
     return "\"" + value.get_string() + "\"";
