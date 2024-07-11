@@ -77,9 +77,6 @@ private:
   char peek() const { return (it != end) ? *it : '\0'; }
   char get() { return (it != end) ? *it++ : '\0'; }
 
-  // the states
-  enum class State { Start, InIdentifier, InNumber, InString, InOperator };
-
   Token process_start_state() {
     char c = peek();
     if (is_identifier_start(c)) {
@@ -222,24 +219,19 @@ private:
       return Token(TokenType::End);
     }
 
-    State state = State::Start;
-    while (true) {
-      switch (state) {
-      case State::Start:
-        return process_start_state();
-      case State::InIdentifier:
-        return process_identifier_state();
-      case State::InNumber:
-        return process_number_state();
-      case State::InString:
-        return process_string_state(peek());
-      case State::InOperator:
-        return process_operator_state();
-      default:
-        throw TokenizerError("Unexpected state");
-      }
+    char c = peek();
+    if (is_identifier_start(c)) {
+      return process_identifier_state();
     }
+    if (std::isdigit(c || c == '-')) {
+      return process_number_state();
+    }
+    if (c == '"' || c == '\'') {
+      return process_string_state(c);
+    }
+    return process_operator_state();
   }
+
   void skip_whitespace() {
     while (it != end && std::isspace(peek())) {
       ++it;
