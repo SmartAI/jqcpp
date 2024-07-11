@@ -74,11 +74,14 @@ private:
   std::string::const_iterator it;
   std::string::const_iterator end;
 
+  char peek() const { return (it != end) ? *it : '\0'; }
+  char get() { return (it != end) ? *it++ : '\0'; }
+
   // the states
   enum class State { Start, InIdentifier, InNumber, InString, InOperator };
 
   Token process_start_state() {
-    char c = *it;
+    char c = peek();
     if (is_identifier_start(c)) {
       return process_identifier_state();
     }
@@ -92,8 +95,8 @@ private:
   }
   Token process_identifier_state() {
     std::string value;
-    while (it != end && is_identifier_part(*it)) {
-      value += *it++;
+    while (it != end && is_identifier_part(peek())) {
+      value += get();
     }
     // Check for keywords
     static const std::unordered_map<std::string, TokenType> keywords = {
@@ -118,16 +121,16 @@ private:
     bool has_e = false;
 
     while (it != end) {
-      if (std::isdigit(*it)) {
-        value += *it++;
-      } else if (*it == '.' && !has_dot && !has_e) {
+      if (std::isdigit(peek())) {
+        value += get();
+      } else if (peek() == '.' && !has_dot && !has_e) {
         has_dot = true;
-        value += *it++;
-      } else if ((*it == 'e' || *it == 'E') && !has_e) {
+        value += get();
+      } else if ((peek() == 'e' || peek() == 'E') && !has_e) {
         has_e = true;
-        value += *it++;
-        if (it != end && (*it == '+' || *it == '-')) {
-          value += *it++;
+        value += get();
+        if (it != end && (peek() == '+' || peek() == '-')) {
+          value += get();
         }
       } else {
         break;
@@ -139,11 +142,11 @@ private:
   Token process_string_state(char quote) {
     std::string value;
     ++it; // skip the quote
-    while (it != end && *it != quote) {
+    while (it != end && peek() != quote) {
       // escape
-      if (*it == '\\' && it + 1 != end) {
+      if (peek() == '\\' && it + 1 != end) {
         ++it;
-        switch (*it) {
+        switch (peek()) {
         case 'n':
           value += '\n';
           break;
@@ -160,10 +163,10 @@ private:
           value += '\f';
           break;
         default:
-          value += *it;
+          value += peek();
         }
       } else {
-        value += *it;
+        value += peek();
       }
       ++it;
     }
@@ -189,10 +192,10 @@ private:
         {"<=", TokenType::LessEqual},   {">", TokenType::Greater},
         {">=", TokenType::GreaterEqual}};
     std::string op;
-    op += *it++;
+    op += get();
     if (it != end) {
       // determin whether is a valid two-characters op
-      std::string potential_op = op + *it;
+      std::string potential_op = op + peek();
       if (operators.find(potential_op) != operators.end()) {
         op = potential_op;
         ++it;
@@ -213,17 +216,6 @@ private:
     return std::isalnum(c) || c == '_' || c == '$';
   }
 
-  char peek() const { return (it != end) ? *it : '\0'; }
-  char advance() { return (it != end) ? *it++ : '\0'; }
-
-  bool match(char expected) {
-    if (it != end || *it != expected) {
-      return false;
-    }
-    ++it;
-    return true;
-  }
-
   Token next_token() {
     skip_whitespace();
     if (it == end) {
@@ -240,7 +232,7 @@ private:
       case State::InNumber:
         return process_number_state();
       case State::InString:
-        return process_string_state(*it);
+        return process_string_state(peek());
       case State::InOperator:
         return process_operator_state();
       default:
@@ -249,24 +241,9 @@ private:
     }
   }
   void skip_whitespace() {
-    while (it != end && std::isspace(*it)) {
+    while (it != end && std::isspace(peek())) {
       ++it;
     }
-  }
-  Token parse_identifier() {
-    std::string value;
-    while (it != end && (std::isalnum(*it) || *it == '_')) {
-      value += *it++;
-    }
-    return Token(TokenType::Identifier, value);
-  }
-
-  Token parse_number() {
-    std::string value;
-    while (it != end && std::isdigit(*it)) {
-      value += *it++;
-    }
-    return Token(TokenType::Number, value);
   }
 };
 } // namespace expr
