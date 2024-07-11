@@ -4,6 +4,11 @@
 
 using namespace jqcpp;
 
+auto find_in_object(const JSONObject &obj, const std::string &key) {
+  return std::find_if(obj.begin(), obj.end(),
+                      [&key](const auto &pair) { return pair.first == key; });
+}
+
 TEST_CASE("JSONPrinter handles simple types correctly", "[printer]") {
   JSONParser parser;
   JSONPrinter printer;
@@ -143,7 +148,7 @@ TEST_CASE("JSONPrinter handles complex nested structures", "[printer]") {
   CHECK(printer.print(json) == expected);
 }
 
-TEST_CASE("JSONPrinter formats objects correctly", "[printer]") {
+TEST_CASE("JSONPrinter formats objects correctly simple", "[printer]") {
   JSONParser parser;
   JSONPrinter printer;
 
@@ -155,16 +160,35 @@ TEST_CASE("JSONPrinter formats objects correctly", "[printer]") {
     // Parse the output again to compare the structure, not the exact string
     auto reparsed = parser.parse(JSONTokenizer().tokenize(output));
 
-    REQUIRE(json.is_object());
-    REQUIRE(reparsed.is_object());
+    CHECK(json.is_object());
+    CHECK(reparsed.is_object());
 
-    const auto &original_person = json.get_object().at("person").get_object();
-    const auto &reparsed_person =
-        reparsed.get_object().at("person").get_object();
+    const auto &original_obj = json.get_object();
+    const auto &reparsed_obj = reparsed.get_object();
 
-    REQUIRE(original_person.at("name").get_string() ==
-            reparsed_person.at("name").get_string());
-    REQUIRE(original_person.at("age").get_number() ==
-            reparsed_person.at("age").get_number());
+    auto original_person_it = find_in_object(original_obj, "person");
+    CHECK(original_person_it != original_obj.end());
+    CHECK(original_person_it->second.is_object());
+
+    auto reparsed_person_it = find_in_object(reparsed_obj, "person");
+    CHECK(reparsed_person_it != reparsed_obj.end());
+    CHECK(reparsed_person_it->second.is_object());
+
+    const auto &original_person = original_person_it->second.get_object();
+    const auto &reparsed_person = reparsed_person_it->second.get_object();
+
+    auto original_name_it = find_in_object(original_person, "name");
+    CHECK(original_name_it != original_person.end());
+    auto reparsed_name_it = find_in_object(reparsed_person, "name");
+    CHECK(reparsed_name_it != reparsed_person.end());
+    CHECK(original_name_it->second.get_string() ==
+          reparsed_name_it->second.get_string());
+
+    auto original_age_it = find_in_object(original_person, "age");
+    CHECK(original_age_it != original_person.end());
+    auto reparsed_age_it = find_in_object(reparsed_person, "age");
+    CHECK(reparsed_age_it != reparsed_person.end());
+    CHECK(original_age_it->second.get_number() ==
+          reparsed_age_it->second.get_number());
   }
 }

@@ -1,6 +1,6 @@
 #pragma once
+#include <algorithm>
 #include <cstddef>
-#include <map>
 #include <memory>
 #include <stdexcept>
 #include <string>
@@ -10,7 +10,10 @@
 namespace jqcpp {
 struct JSONValue;
 using JSONArray = std::vector<JSONValue>;
-using JSONObject = std::map<std::string, JSONValue>;
+// use vector instead of map for maintain the insertion order
+// however, need be careful when insert new pair
+// for the exist keys just update the values
+using JSONObject = std::vector<std::pair<std::string, JSONValue>>;
 
 struct JSONValue {
   std::variant<std::string, double, bool, std::nullptr_t,
@@ -70,5 +73,18 @@ struct JSONValue {
     return *std::get<std::unique_ptr<JSONArray>>(value);
   }
 };
+
+inline void jsonObjectInsert(JSONObject &obj, const std::string &key,
+                             JSONValue v) {
+  auto it = std::find_if(obj.begin(), obj.end(), [&key](const auto &pair) {
+    return pair.first == key;
+  });
+  if (it != obj.end()) {
+    // found, update the value
+    it->second = std::move(v);
+  } else {
+    obj.emplace_back(key, std::move(v));
+  }
+}
 
 } // namespace jqcpp

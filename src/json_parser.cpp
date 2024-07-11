@@ -79,7 +79,7 @@ JSONValue JSONParser::parse_object() {
       // should be colon :
       consume(TokenType::Colon);
       // the value
-      object[key] = parse_value();
+      jsonObjectInsert(object, key, parse_value());
       // the key: value ends when encounter a comma: ,
       // and then another object starts
     } while (it != end && it->type == TokenType::Comma && (++it, true));
