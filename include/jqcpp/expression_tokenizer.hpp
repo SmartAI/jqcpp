@@ -5,9 +5,7 @@
 #include <unordered_map>
 #include <vector>
 
-namespace jqcpp {
-
-namespace expr {
+namespace jqcpp::expr {
 
 class TokenizerError : public std::runtime_error {
 public:
@@ -224,6 +222,5 @@ private:
     }
   }
 };
-} // namespace expr
 
-} // namespace jqcpp
+} // namespace jqcpp::expr

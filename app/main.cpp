@@ -1,5 +1,7 @@
+#include "jqcpp/expression_interpreter.hpp"
 #include "jqcpp/json_parser.hpp"
 #include "jqcpp/json_tokenizer.hpp"
+#include "jqcpp/json_value.hpp"
 #include "jqcpp/pretty_printer.hpp"
 #include <exception>
 #include <iostream>
@@ -29,15 +31,26 @@ void print_help() {
 
 int main(int argc, char *argv[]) {
   // read from user input and print out
+  if (argc != 2) {
+    print_help();
+    return 1;
+  }
+
+  std::string jq_expr(argv[1]);
+
   std::string json_input = read_json_input();
   try {
-    JSONTokenizer tokenizer;
-    JSONParser parser;
-    JSONPrinter printer;
+    jqcpp::json::JSONTokenizer tokenizer;
+    jqcpp::json::JSONParser parser;
+    jqcpp::json::JSONPrinter printer;
 
     auto tokens = tokenizer.tokenize(json_input);
     auto json_value = parser.parse(tokens);
-    std::cout << printer.print(json_value) << "\n";
+
+    // std::cout << printer.print(json_value) << "\n";
+    jqcpp::expr::JQInterpreter interpreter(jq_expr);
+    const jqcpp::json::JSONValue &result = interpreter.execute(json_value);
+    std::cout << printer.print(result) << "\n";
     return 0;
   } catch (const std::exception &e) {
     std::cerr << "Error: " << e.what() << std::endl;

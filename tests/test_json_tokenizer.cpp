@@ -1,7 +1,7 @@
 #include "jqcpp/json_tokenizer.hpp"
 #include <catch2/catch_all.hpp>
 
-using namespace jqcpp;
+using namespace jqcpp::json;
 
 TEST_CASE("JSONTokenizer handles structural tokens", "[tokenizer]") {
   JSONTokenizer tokenizer;

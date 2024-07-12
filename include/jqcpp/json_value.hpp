@@ -7,7 +7,7 @@
 #include <variant>
 #include <vector>
 
-namespace jqcpp {
+namespace jqcpp::json {
 struct JSONValue;
 using JSONArray = std::vector<JSONValue>;
 // use vector instead of map for maintain the insertion order
@@ -87,4 +87,4 @@ inline void jsonObjectInsert(JSONObject &obj, const std::string &key,
   }
 }
 
-} // namespace jqcpp
+} // namespace jqcpp::json

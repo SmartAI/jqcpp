@@ -3,7 +3,7 @@
 
 #include <string>
 
-namespace jqcpp {
+namespace jqcpp::json {
 
 /**
  * @class JSONPrinter
@@ -20,4 +20,4 @@ private:
   std::string print_array(const JSONArray &arr, int indent);
 };
 
-} // namespace jqcpp
+} // namespace jqcpp::json

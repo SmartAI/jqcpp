@@ -2,7 +2,7 @@
 #include "jqcpp/pretty_printer.hpp"
 #include <catch2/catch_all.hpp>
 
-using namespace jqcpp;
+using namespace jqcpp::json;
 
 auto find_in_object(const JSONObject &obj, const std::string &key) {
   return std::find_if(obj.begin(), obj.end(),

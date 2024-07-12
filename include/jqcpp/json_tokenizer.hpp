@@ -2,7 +2,7 @@
 #include <stdexcept>
 #include <string>
 #include <vector>
-namespace jqcpp {
+namespace jqcpp::json {
 
 enum class TokenType {
   LeftBrace,
@@ -53,4 +53,4 @@ public:
   JSONTokenizerError(const std::string &message)
       : std::runtime_error(message) {}
 };
-} // namespace jqcpp
+} // namespace jqcpp::json

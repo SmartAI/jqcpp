@@ -1,7 +1,7 @@
 #include "jqcpp/json_tokenizer.hpp"
 #include <vector>
 
-namespace jqcpp {
+namespace jqcpp::json {
 std::vector<Token> JSONTokenizer::tokenize(const std::string &json_string) {
   std::vector<Token> tokens;
   // initialize the iterators
@@ -217,4 +217,4 @@ Token JSONTokenizer::parse_string() {
   throw JSONTokenizerError("Unterminated string");
 }
 
-} // namespace jqcpp
+} // namespace jqcpp::json

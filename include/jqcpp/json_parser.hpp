@@ -5,7 +5,7 @@
 #include <string>
 #include <vector>
 
-namespace jqcpp {
+namespace jqcpp::json {
 class JSONParser {
 public:
   JSONValue parse(const std::vector<Token> &tokens);
@@ -27,4 +27,4 @@ public:
   JSONParserError(const std::string &message) : std::runtime_error(message) {}
 };
 
-} // namespace jqcpp
+} // namespace jqcpp::json

@@ -5,11 +5,9 @@
 
 #include "jqcpp/pretty_printer.hpp"
 #include "jqcpp/json_value.hpp"
-#include <iomanip>
-#include <limits>
 #include <sstream>
 
-namespace jqcpp {
+namespace jqcpp::json {
 
 /**
  * @brief pretty print a json object
@@ -108,4 +106,4 @@ std::string JSONPrinter::print_array(const JSONArray &arr, int indent) {
   return oss.str();
 }
 
-} // namespace jqcpp
+} // namespace jqcpp::json

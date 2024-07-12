@@ -2,7 +2,7 @@
 #include "jqcpp/json_tokenizer.hpp"
 #include "jqcpp/json_value.hpp"
 
-namespace jqcpp {
+namespace jqcpp::json {
 JSONValue JSONParser::parse(const std::vector<Token> &tokens) {
   if (tokens.empty()) {
     throw JSONParserError("Empty tokens");
@@ -108,4 +108,4 @@ JSONValue JSONParser::parse_array() {
   return JSONValue(std::move(arr));
 }
 
-} // namespace jqcpp
+} // namespace jqcpp::json
