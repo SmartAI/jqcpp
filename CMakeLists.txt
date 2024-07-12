@@ -33,6 +33,11 @@ target_link_libraries(test_json_parser PRIVATE Catch2::Catch2WithMain)
 add_executable(test_pretty_printer tests/test_pretty_printer.cpp src/json_parser.cpp src/json_tokenizer.cpp src/pretty_printer.cpp)
 target_link_libraries(test_pretty_printer PRIVATE Catch2::Catch2WithMain)
 
+# expression tokenizer test
+add_executable(test_expression_tokenizer tests/test_expression_tokenizer.cpp)
+target_link_libraries(test_expression_tokenizer PRIVATE Catch2::Catch2WithMain)
+
+
 
 #  The app
 add_executable(jqcpp src/json_parser.cpp src/json_tokenizer.cpp src/pretty_printer.cpp app/main.cpp)
@@ -42,6 +47,7 @@ enable_testing()
 add_test(NAME json_tokenizer_test COMMAND test_json_tokenizer)
 add_test(NAME json_parser_test COMMAND test_json_parser)
 add_test(NAME json_pretty_printer COMMAND test_pretty_printer)
+add_test(NAME expression_tokenizer_test COMMAND test_expression_tokenizer)
 
 # Add a custom target to run all tests
 add_custom_target(run_tests
@@ -49,6 +55,7 @@ add_custom_target(run_tests
     DEPENDS test_json_tokenizer 
             test_json_parser 
             test_pretty_printer
+            test_expression_tokenizer
 )
 
 # Installation rules
