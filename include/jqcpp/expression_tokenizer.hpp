@@ -138,11 +138,11 @@ private:
 
   Token process_string_state(char quote) {
     std::string value;
-    ++it; // skip the quote
+    get(); // skip the quote
     while (it != end && peek() != quote) {
       // escape
       if (peek() == '\\' && it + 1 != end) {
-        ++it;
+        get();
         switch (peek()) {
         case 'n':
           value += '\n';
@@ -165,12 +165,12 @@ private:
       } else {
         value += peek();
       }
-      ++it;
+      get();
     }
     if (it == end) {
       throw TokenizerError("Unterminated string");
     }
-    ++it; // skip ending quote
+    get(); // skip ending quote
     return Token(TokenType::String, value);
   }
   Token process_operator_state() {
@@ -195,7 +195,7 @@ private:
       std::string potential_op = op + peek();
       if (operators.find(potential_op) != operators.end()) {
         op = potential_op;
-        ++it;
+        get();
       }
     }
     auto op_it = operators.find(op);
@@ -223,7 +223,7 @@ private:
     if (is_identifier_start(c)) {
       return process_identifier_state();
     }
-    if (std::isdigit(c || c == '-')) {
+    if (std::isdigit(c) || c == '-') {
       return process_number_state();
     }
     if (c == '"' || c == '\'') {
@@ -234,7 +234,7 @@ private:
 
   void skip_whitespace() {
     while (it != end && std::isspace(peek())) {
-      ++it;
+      get();
     }
   }
 };
