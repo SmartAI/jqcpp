@@ -26,7 +26,6 @@ enum class TokenType {
   RightParen,
   Semicolon,
   QuestionMark,
-  Star,
   At,
   Dollar,
   String,
@@ -75,21 +74,9 @@ private:
   std::string::const_iterator end;
 
   char peek() const { return (it != end) ? *it : '\0'; }
+  char peek_next() const { return (it + 1 != end) ? *(it + 1) : '\0'; }
   char get() { return (it != end) ? *it++ : '\0'; }
 
-  Token process_start_state() {
-    char c = peek();
-    if (is_identifier_start(c)) {
-      return process_identifier_state();
-    }
-    if (std::isdigit(c)) {
-      return process_number_state();
-    }
-    if (c == '"' || c == '\'') {
-      return process_string_state(c);
-    }
-    return process_operator_state();
-  }
   Token process_identifier_state() {
     std::string value;
     while (it != end && is_identifier_part(peek())) {
@@ -175,19 +162,18 @@ private:
   }
   Token process_operator_state() {
     static const std::unordered_map<std::string, TokenType> operators = {
-        {".", TokenType::Dot},          {"|", TokenType::Pipe},
-        {"(", TokenType::LeftParen},    {")", TokenType::RightParen},
-        {"[", TokenType::LeftBracket},  {"]", TokenType::RightBracket},
-        {",", TokenType::Comma},        {"=", TokenType::Equals},
-        {";", TokenType::Semicolon},    {"?", TokenType::QuestionMark},
-        {"*", TokenType::Star},         {"@", TokenType::At},
-        {"$", TokenType::Dollar},       {"+", TokenType::Plus},
-        {"-", TokenType::Minus},        {"*", TokenType::Multiply},
-        {"/", TokenType::Divide},       {"%", TokenType::Modulo},
-        {":", TokenType::Colon},        {"==", TokenType::EqualEqual},
-        {"!=", TokenType::NotEqual},    {"<", TokenType::Less},
-        {"<=", TokenType::LessEqual},   {">", TokenType::Greater},
-        {">=", TokenType::GreaterEqual}};
+        {".", TokenType::Dot},         {"|", TokenType::Pipe},
+        {"(", TokenType::LeftParen},   {")", TokenType::RightParen},
+        {"[", TokenType::LeftBracket}, {"]", TokenType::RightBracket},
+        {",", TokenType::Comma},       {"=", TokenType::Equals},
+        {";", TokenType::Semicolon},   {"?", TokenType::QuestionMark},
+        {"@", TokenType::At},          {"$", TokenType::Dollar},
+        {"+", TokenType::Plus},        {"-", TokenType::Minus},
+        {"*", TokenType::Multiply},    {"/", TokenType::Divide},
+        {"%", TokenType::Modulo},      {":", TokenType::Colon},
+        {"==", TokenType::EqualEqual}, {"!=", TokenType::NotEqual},
+        {"<", TokenType::Less},        {"<=", TokenType::LessEqual},
+        {">", TokenType::Greater},     {">=", TokenType::GreaterEqual}};
     std::string op;
     op += get();
     if (it != end) {
@@ -223,7 +209,7 @@ private:
     if (is_identifier_start(c)) {
       return process_identifier_state();
     }
-    if (std::isdigit(c) || c == '-') {
+    if (std::isdigit(c) || (c == '-') && std::isdigit(peek_next())) {
       return process_number_state();
     }
     if (c == '"' || c == '\'') {
