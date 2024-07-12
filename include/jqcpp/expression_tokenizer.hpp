@@ -209,7 +209,7 @@ private:
     if (is_identifier_start(c)) {
       return process_identifier_state();
     }
-    if (std::isdigit(c) || (c == '-') && std::isdigit(peek_next())) {
+    if (std::isdigit(c)) {
       return process_number_state();
     }
     if (c == '"' || c == '\'') {
