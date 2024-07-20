@@ -43,6 +43,8 @@ enum class TokenType {
   Or,
   Not,
   Colon,
+  LeftBrace,
+  RightBrace,
   End
 };
 

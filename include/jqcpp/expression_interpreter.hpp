@@ -16,11 +16,14 @@ public:
   virtual ~ExpressionVisitor() = default;
   virtual void visit(const class Identity &) = 0;
   virtual void visit(const class Identifier &) = 0;
+  virtual void visit(const class UnaryOp &) = 0;
   virtual void visit(const class ObjectAccess &) = 0;
   virtual void visit(const class ArrayAccess &) = 0;
   virtual void visit(const class ArraySlice &) = 0;
   virtual void visit(const class BinaryOp &) = 0;
   virtual void visit(const class Literal &) = 0;
+  virtual void visit(const class ObjectConstruction &) = 0;
+  virtual void visit(const class ArrayConstruction &) = 0;
 };
 
 class Expression {
@@ -29,6 +32,34 @@ public:
   virtual json::JSONValue evaluate(const json::JSONValue &input) const = 0;
   virtual void accept(ExpressionVisitor &visitor) const = 0;
   virtual std::string toString() const = 0;
+};
+
+class UnaryOp : public Expression {
+  std::unique_ptr<Expression> operand;
+  TokenType op;
+
+public:
+  UnaryOp(std::unique_ptr<Expression> expr, TokenType o)
+      : operand(std::move(expr)), op(o) {}
+
+  json::JSONValue evaluate(const json::JSONValue &input) const override {
+    auto value = operand->evaluate(input);
+    if (op == TokenType::Minus) {
+      if (value.is_number()) {
+        return json::JSONValue(-value.get_number());
+      }
+      throw std::runtime_error("Cannot apply unary minus to non-number value");
+    }
+    throw std::runtime_error("Unsupported unary operation");
+  }
+
+  void accept(ExpressionVisitor &visitor) const override {
+    visitor.visit(*this);
+  }
+
+  std::string toString() const override {
+    return "(" + Token(op).value + operand->toString() + ")";
+  }
 };
 
 class Identifier : public Expression {
@@ -98,6 +129,7 @@ class ArrayAccess : public Expression {
 public:
   ArrayAccess(std::unique_ptr<Expression> arr, std::unique_ptr<Expression> idx)
       : array(std::move(arr)), index(std::move(idx)) {}
+
   json::JSONValue evaluate(const json::JSONValue &input) const override {
     const auto &arr = array->evaluate(input);
     if (!arr.is_array()) {
@@ -110,9 +142,11 @@ public:
     }
     return arr_value[idx].deepCopy();
   }
+
   void accept(ExpressionVisitor &visitor) const override {
     visitor.visit(*this);
   }
+
   std::string toString() const override {
     return array->toString() + "[" + index->toString() + "]";
   }
@@ -127,6 +161,7 @@ public:
   ArraySlice(std::unique_ptr<Expression> arr, std::unique_ptr<Expression> s,
              std::unique_ptr<Expression> e)
       : array(std::move(arr)), start(std::move(s)), end(std::move(e)) {}
+
   json::JSONValue evaluate(const json::JSONValue &input) const override {
     const auto &arr = array->evaluate(input);
     if (!arr.is_array()) {
@@ -142,14 +177,16 @@ public:
 
     std::vector<json::JSONValue> result;
     result.reserve(e - s);
-    for (size_t i = s; i < e; ++i) {
-      result.push_back(arr_value[i].deepCopy());
+    for (std::size_t i = 0; i < e - s; ++i) {
+      result.push_back(arr_value[s + i].deepCopy());
     }
     return json::JSONValue(std::move(result));
   }
+
   void accept(ExpressionVisitor &visitor) const override {
     visitor.visit(*this);
   }
+
   std::string toString() const override {
     return array->toString() + "[" + (start ? start->toString() : "") + ":" +
            (end ? end->toString() : "") + "]";
@@ -165,27 +202,45 @@ public:
   BinaryOp(std::unique_ptr<Expression> l, std::unique_ptr<Expression> r,
            TokenType o)
       : left(std::move(l)), right(std::move(r)), op(o) {}
+
   json::JSONValue evaluate(const json::JSONValue &input) const override {
     auto l = left->evaluate(input);
     auto r = right->evaluate(input);
+
     switch (op) {
     case TokenType::Plus:
-      return json::JSONValue(l.get_number() + r.get_number());
+      if (l.is_number() && r.is_number()) {
+        return json::JSONValue(l.get_number() + r.get_number());
+      }
+      // Handle string concatenation or other types if needed
+      break;
     case TokenType::Minus:
-      return json::JSONValue(l.get_number() - r.get_number());
+      if (l.is_number() && r.is_number()) {
+        return json::JSONValue(l.get_number() - r.get_number());
+      }
+      break;
     case TokenType::Multiply:
-      return json::JSONValue(l.get_number() * r.get_number());
+      if (l.is_number() && r.is_number()) {
+        return json::JSONValue(l.get_number() * r.get_number());
+      }
+      break;
     case TokenType::Divide:
-      if (r.get_number() == 0)
-        throw std::runtime_error("Division by zero");
-      return json::JSONValue(l.get_number() / r.get_number());
+      if (l.is_number() && r.is_number()) {
+        if (r.get_number() == 0)
+          throw std::runtime_error("Division by zero");
+        return json::JSONValue(l.get_number() / r.get_number());
+      }
+      break;
     default:
       throw std::runtime_error("Unsupported binary operation");
     }
+    throw std::runtime_error("Invalid operand types for binary operation");
   }
+
   void accept(ExpressionVisitor &visitor) const override {
     visitor.visit(*this);
   }
+
   std::string toString() const override {
     return "(" + left->toString() + " " + Token(op).value + " " +
            right->toString() + ")";
@@ -301,6 +356,44 @@ public:
   }
 
 private:
+  std::unique_ptr<Expression> parseObjectConstruction() {
+    std::vector<std::pair<std::string, std::unique_ptr<Expression>>> elements;
+
+    if (!check(TokenType::RightBrace)) {
+      do {
+        std::string key;
+        if (match(TokenType::String)) {
+          key = std::prev(current)->value;
+        } else if (match(TokenType::Identifier)) {
+          key = std::prev(current)->value;
+        } else {
+          throw std::runtime_error(
+              "Expected string or identifier as object key");
+        }
+
+        consume(TokenType::Colon, "Expect ':' after object key");
+        auto value = parseExpression();
+        elements.emplace_back(std::move(key), std::move(value));
+      } while (match(TokenType::Comma));
+    }
+
+    consume(TokenType::RightBrace, "Expect '}' after object construction");
+    return std::make_unique<ObjectConstruction>(std::move(elements));
+  }
+
+  std::unique_ptr<Expression> parseArrayConstruction() {
+    std::vector<std::unique_ptr<Expression>> elements;
+
+    if (!check(TokenType::RightBracket)) {
+      do {
+        elements.push_back(parseExpression());
+      } while (match(TokenType::Comma));
+    }
+
+    consume(TokenType::RightBracket, "Expect ']' after array construction");
+    return std::make_unique<ArrayConstruction>(std::move(elements));
+  }
+
   std::unique_ptr<Expression> parseExpression() {
     auto expr = parseTerm();
     while (match(TokenType::Plus) || match(TokenType::Minus)) {
@@ -322,9 +415,24 @@ private:
   }
 
   std::unique_ptr<Expression> parseFactor() {
+    if (match(TokenType::Minus)) {
+      auto expr = parseFactor();
+      return std::make_unique<UnaryOp>(std::move(expr), TokenType::Minus);
+    }
+    return parsePrimary();
+  }
+
+  std::unique_ptr<Expression> parsePrimary() {
     std::unique_ptr<Expression> expr;
 
-    if (match(TokenType::Dot)) {
+    if (match(TokenType::LeftParen)) {
+      expr = parseExpression();
+      consume(TokenType::RightParen, "Expect ')' after expression.");
+    } else if (match(TokenType::LeftBrace)) {
+      expr = parseObjectConstruction();
+    } else if (match(TokenType::LeftBracket)) {
+      expr = parseArrayConstruction();
+    } else if (match(TokenType::Dot)) {
       expr = std::make_unique<Identity>();
       if (match(TokenType::Identifier)) {
         expr = std::make_unique<ObjectAccess>(std::move(expr),
@@ -353,7 +461,7 @@ private:
         auto index = parseExpression();
         if (match(TokenType::Colon)) {
           auto end =
-              match(TokenType::RightBracket) ? nullptr : parseExpression();
+              check(TokenType::RightBracket) ? nullptr : parseExpression();
           consume(TokenType::RightBracket, "Expect ']' after array slice");
           expr = std::make_unique<ArraySlice>(std::move(expr), std::move(index),
                                               std::move(end));
@@ -415,6 +523,11 @@ public:
     oss << expr.toString() << "\n";
   }
 
+  void visit(const UnaryOp &expr) override {
+    printIndent();
+    oss << expr.toString() << "\n";
+  }
+
   void visit(const Identifier &expr) override {
     printIndent();
     oss << expr.toString() << "\n";
@@ -441,6 +554,16 @@ public:
   }
 
   void visit(const Literal &expr) override {
+    printIndent();
+    oss << expr.toString() << "\n";
+  }
+
+  void visit(const ObjectConstruction &expr) override {
+    printIndent();
+    oss << expr.toString() << "\n";
+  }
+
+  void visit(const ArrayConstruction &expr) override {
     printIndent();
     oss << expr.toString() << "\n";
   }
