@@ -42,6 +42,8 @@ target_link_libraries(test_jqcpp PRIVATE Catch2::Catch2WithMain)
 
 #  The app
 add_executable(jqcpp app/main.cpp ${JQCPP_SOURCES})
+add_executable(jqfilter app/expression_repl.cpp ${JQCPP_SOURCES})
+
 
 # Enable testing
 enable_testing()
