@@ -53,7 +53,7 @@ void JSONParser::consume(TokenType expected_type) {
     throw JSONParserError("Unexpected end of token!");
   }
   if (it->type != expected_type) {
-    throw JSONParserError("Unexpected tokey type");
+    throw JSONParserError("Unexpected token type");
   }
   ++it;
 }

@@ -15,6 +15,9 @@ using JSONArray = std::vector<JSONValue>;
 // for the exist keys just update the values
 using JSONObject = std::vector<std::pair<std::string, JSONValue>>;
 
+inline void jsonObjectInsert(JSONObject &obj, const std::string &key,
+                             JSONValue v);
+
 struct JSONValue {
   std::variant<std::string, double, bool, std::nullptr_t,
                std::unique_ptr<JSONArray>, std::unique_ptr<JSONObject>>
@@ -71,6 +74,31 @@ struct JSONValue {
       throw std::runtime_error("Not a JSON Array");
     }
     return *std::get<std::unique_ptr<JSONArray>>(value);
+  }
+
+  JSONValue deepCopy() const {
+    if (is_string()) {
+      return JSONValue(get_string());
+    } else if (is_number()) {
+      return JSONValue(get_number());
+    } else if (is_bool()) {
+      return JSONValue(get_bool());
+    } else if (is_null()) {
+      return JSONValue();
+    } else if (is_array()) {
+      JSONArray new_array;
+      for (const auto &elem : get_array()) {
+        new_array.push_back(elem.deepCopy());
+      }
+      return JSONValue(std::move(new_array));
+    } else if (is_object()) {
+      JSONObject new_object;
+      for (const auto &[key, value] : get_object()) {
+        jsonObjectInsert(new_object, key, value.deepCopy());
+      }
+      return JSONValue(std::move(new_object));
+    }
+    throw std::runtime_error("Unknown JSONValue type in deepCopy");
   }
 };
 
