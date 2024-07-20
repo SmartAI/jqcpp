@@ -45,6 +45,8 @@ enum class TokenType {
   Colon,
   LeftBrace,
   RightBrace,
+  LENGTH,
+  KEYS,
   End
 };
 
@@ -87,6 +89,8 @@ private:
         {"and", TokenType::And},
         {"or", TokenType::Or},
         {"not", TokenType::Not},
+        {"length", TokenType::LENGTH},
+        {"keys", TokenType::KEYS},
         {"null", TokenType::Identifier}, // Treat null as a special identifier
         {"true", TokenType::Identifier}, // Treat true as a special identifier
         {"false", TokenType::Identifier} // Treat false as a special identifier
