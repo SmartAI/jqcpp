@@ -16,6 +16,18 @@ std::unique_ptr<ASTNode> JQParser::parseExpression() {
     auto right = parseTerm();
     node = std::make_unique<PipeNode>(std::move(node), std::move(right));
   }
+
+  while (match(TokenType::Plus) || match(TokenType::Minus)) {
+    TokenType op = std::prev(current)->type;
+    auto right = parseTerm();
+    if (op == TokenType::Plus) {
+      node = std::make_unique<AdditionNode>(std::move(node), std::move(right));
+    } else {
+      node =
+          std::make_unique<SubtractionNode>(std::move(node), std::move(right));
+    }
+  }
+
   return node;
 }
 
