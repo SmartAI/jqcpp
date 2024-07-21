@@ -1,10 +1,10 @@
 #include "jqcpp/jq_lex.hpp"
 #include <catch2/catch_all.hpp>
 
-using namespace jqcpp::expr;
+using namespace jqcpp;
 
-TEST_CASE("ExpressionTokenizer basic functionality", "[tokenizer]") {
-  ExpressionTokenizer tokenizer;
+TEST_CASE("JQLexer basic functionality", "[tokenizer]") {
+  JQLexer tokenizer;
 
   SECTION("Empty input") {
     auto tokens = tokenizer.tokenize("");
@@ -54,8 +54,8 @@ TEST_CASE("ExpressionTokenizer basic functionality", "[tokenizer]") {
   }
 }
 
-TEST_CASE("ExpressionTokenizer complex expressions", "[tokenizer]") {
-  ExpressionTokenizer tokenizer;
+TEST_CASE("JQLexer complex expressions", "[tokenizer]") {
+  JQLexer tokenizer;
 
   SECTION("Complex expression") {
     auto tokens = tokenizer.tokenize(".foo[123] | .bar == \"test\"");
@@ -131,16 +131,16 @@ TEST_CASE("ExpressionTokenizer complex expressions", "[tokenizer]") {
   }
 }
 
-TEST_CASE("ExpressionTokenizer error handling", "[tokenizer]") {
-  ExpressionTokenizer tokenizer;
+TEST_CASE("JQLexer error handling", "[tokenizer]") {
+  JQLexer tokenizer;
 
   SECTION("Unterminated string") {
     CHECK_THROWS_AS(tokenizer.tokenize("\"unterminated"), TokenizerError);
   }
 }
 
-TEST_CASE("ExpressionTokenizer special cases", "[tokenizer]") {
-  ExpressionTokenizer tokenizer;
+TEST_CASE("JQLexer special cases", "[tokenizer]") {
+  JQLexer tokenizer;
 
   SECTION("Keywords") {
     auto tokens = tokenizer.tokenize("and or not null true false");
@@ -177,9 +177,8 @@ TEST_CASE("ExpressionTokenizer special cases", "[tokenizer]") {
   }
 }
 
-TEST_CASE("ExpressionTokenizer tokenizes expressions correctly",
-          "[tokenizer]") {
-  ExpressionTokenizer tokenizer;
+TEST_CASE("JQLexer tokenizes expressions correctly", "[tokenizer]") {
+  JQLexer tokenizer;
 
   SECTION("Simple tokens") {
     auto tokens = tokenizer.tokenize(".[],:+-");

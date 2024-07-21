@@ -1,11 +1,10 @@
-#include "jqcpp/jqcpp.hpp"
+#include "jqcpp/jq_interpreter.hpp"
 #include "jqcpp/json_parser.hpp"
 #include "jqcpp/json_tokenizer.hpp"
 #include <catch2/catch_all.hpp>
 #include <sstream>
 
 using namespace jqcpp;
-using namespace jqcpp::expr;
 
 // Helper function to run jqcpp and capture output
 std::string run_jqcpp_test(const std::string &input,

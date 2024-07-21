@@ -1,226 +1,143 @@
-
 #include "jqcpp/jq_parser.hpp"
-#include "jqcpp/jq_ast_node.hpp"
 #include "jqcpp/jq_lex.hpp"
-#include "jqcpp/json_value.hpp"
-#include <memory>
 #include <stdexcept>
 
-namespace jqcpp::expr {
+namespace jqcpp {
 
-// Forward declarations
-json::JSONValue applyAddition(const json::JSONValue &lhs,
-                              const json::JSONValue &rhs);
-json::JSONValue applySubtraction(const json::JSONValue &lhs,
-                                 const json::JSONValue &rhs);
+std::unique_ptr<ASTNode> JQParser::parse(const std::vector<Token> &tokens) {
+  current = tokens.begin();
+  end = tokens.end();
+  return parseExpression();
+}
 
-std::unique_ptr<ASTNode> JQParser::parseFilter() {
+std::unique_ptr<ASTNode> JQParser::parseExpression() {
   auto node = parseTerm();
-  while (pos < tokens.size() && tokens[pos].type == TokenType::Pipe) {
-    pos++; // Skip '|'
-    auto rightNode = parseTerm();
-    node = std::make_unique<ASTNode>(ASTNodeType::PIPE, std::move(node),
-                                     std::move(rightNode));
+  while (match(TokenType::Pipe)) {
+    auto right = parseTerm();
+    node = std::make_unique<PipeNode>(std::move(node), std::move(right));
   }
   return node;
 }
 
 std::unique_ptr<ASTNode> JQParser::parseTerm() {
-  if (tokens[pos].type == TokenType::Dot) {
-    pos++; // Skip '.'
-    if (tokens[pos].type == TokenType::Identifier) {
-      return parseField();
+  if (match(TokenType::Dot)) {
+    if (isAtEnd() || peek().type == TokenType::Pipe) {
+      return std::make_unique<IdentityNode>();
     }
-    if (tokens[pos].type == TokenType::LeftBracket) {
-      return parseArrayIndexOrSliceOrObjectAccessOrIterator();
-    }
-    // identity
-    if (tokens[pos].type == TokenType::End) {
-      // identity node
-      return std::make_unique<ASTNode>(ASTNodeType::IDENTITY);
-    }
-    throw std::runtime_error("Unexpected token after '.'");
+    return parseFieldAccess(std::make_unique<IdentityNode>());
+  } else if (match(TokenType::Length)) {
+    return parseLength();
+  } else if (match(TokenType::Keys)) {
+    return parseKeys();
+  } else if (match(TokenType::Plus) || match(TokenType::Minus)) {
+    return parseAddition();
   }
-  throw std::runtime_error("Unexpected token in Term");
-}
-
-std::unique_ptr<ASTNode> JQParser::parseField() {
-  std::string identifier = tokens[pos].value;
-  pos++;
-  return std::make_unique<ASTNode>(ASTNodeType::IDENTIFIER, identifier);
+  throw std::runtime_error("Not supported op");
 }
 
 std::unique_ptr<ASTNode>
-JQParser::parseArrayIndexOrSliceOrObjectAccessOrIterator() {
-  pos++; // Skip '['
-  if (tokens[pos].type == TokenType::RightBracket) {
-    pos++; // Skip ']'
-    return std::make_unique<ASTNode>(ASTNodeType::OBJECT_ITERATOR);
-  }
-  if (tokens[pos].type == TokenType::String) {
-    std::string identifier = tokens[pos].value;
-    pos++;
-    if (tokens[pos].type != TokenType::RightBracket) {
-      throw std::runtime_error("Expected ']' after object access identifier");
+JQParser::parseFieldAccess(std::unique_ptr<ASTNode> base) {
+  if (match(TokenType::Identifier)) {
+    auto field = std::make_unique<FieldNode>(std::prev(current)->value);
+    auto node =
+        std::make_unique<ObjectAccessNode>(std::move(base), std::move(field));
+
+    if (match(TokenType::Dot)) {
+      return parseFieldAccess(std::move(node));
+    } else if (match(TokenType::LeftBracket)) {
+      return parseArrayAccess(std::move(node));
     }
-    pos++; // Skip ']'
-    return std::make_unique<ASTNode>(ASTNodeType::OBJECT_ACCESS, identifier);
+
+    return node;
   }
-  std::unique_ptr<ASTNode> startNode;
-  if (tokens[pos].type == TokenType::Number) {
-    startNode = parseLiteral();
-  }
-  if (tokens[pos].type == TokenType::Colon) {
-    pos++; // Skip ':'
-    std::unique_ptr<ASTNode> endNode;
-    if (tokens[pos].type == TokenType::Number) {
-      endNode = parseLiteral();
+  throw std::runtime_error("Expected identifier after '.'");
+}
+
+std::unique_ptr<ASTNode>
+JQParser::parseArrayAccess(std::unique_ptr<ASTNode> base) {
+  if (match(TokenType::Number)) {
+    auto index =
+        std::make_unique<LiteralNode>(std::stoi(std::prev(current)->value));
+    consume(TokenType::RightBracket, "Expected ']' after array index");
+    auto node =
+        std::make_unique<ArrayIndexNode>(std::move(base), std::move(index));
+
+    if (match(TokenType::Dot)) {
+      return parseFieldAccess(std::move(node));
+    } else if (match(TokenType::LeftBracket)) {
+      return parseArrayAccess(std::move(node));
     }
-    if (tokens[pos].type != TokenType::RightBracket) {
-      throw std::runtime_error("Expected ']' after array slice");
-    }
-    pos++; // Skip ']'
-    return std::make_unique<ASTNode>(ASTNodeType::ARRAY_SLICE,
-                                     std::move(startNode), std::move(endNode));
+
+    return node;
+  } else if (match(TokenType::Colon)) {
+    return parseSlice(std::move(base));
+  } else if (match(TokenType::RightBracket)) {
+    return std::make_unique<ObjectIteratorNode>(std::move(base));
   }
-  if (tokens[pos].type != TokenType::RightBracket) {
-    throw std::runtime_error("Expected ']' after array index");
-  }
-  pos++; // Skip ']'
-  return std::make_unique<ASTNode>(ASTNodeType::ARRAY_INDEX,
-                                   std::move(startNode), nullptr);
+  throw std::runtime_error("Expected number, ':', or ']' after '['");
 }
 
-std::unique_ptr<ASTNode> JQParser::parseLiteral() {
-  double number_value = std::stod(tokens[pos].value);
-  pos++;
-  return std::make_unique<ASTNode>(ASTNodeType::LITERAL, number_value);
+std::unique_ptr<ASTNode> JQParser::parseSlice(std::unique_ptr<ASTNode> base) {
+  std::unique_ptr<ASTNode> start, end;
+  if (match(TokenType::Number)) {
+    start = std::make_unique<LiteralNode>(std::stoi(std::prev(current)->value));
+  }
+  consume(TokenType::Colon, "Expected ':' in array slice");
+  if (match(TokenType::Number)) {
+    end = std::make_unique<LiteralNode>(std::stoi(std::prev(current)->value));
+  }
+  consume(TokenType::RightBracket, "Expected ']' after array slice");
+  return std::make_unique<ArraySliceNode>(std::move(base), std::move(start),
+                                          std::move(end));
 }
 
-std::unique_ptr<ASTNode> JQParser::parseArrayIndex() {
-  pos++; // Skip '['
-  auto indexNode = parseTerm();
-  if (tokens[pos].type != TokenType::RightBracket) {
-    throw std::runtime_error("Expected ']'");
+std::unique_ptr<ASTNode> JQParser::parseAddition() {
+  auto node = parseSubtraction();
+  while (match(TokenType::Plus)) {
+    auto right = parseSubtraction();
+    node = std::make_unique<AdditionNode>(std::move(node), std::move(right));
   }
-  pos++; // Skip ']'
-  return std::make_unique<ASTNode>(ASTNodeType::ARRAY_INDEX,
-                                   std::move(indexNode), nullptr);
+  return node;
 }
 
-std::unique_ptr<ASTNode> JQParser::parseArraySlice() {
-  pos++; // Skip '['
-  auto startNode = parseTerm();
-  std::unique_ptr<ASTNode> endNode;
-  if (tokens[pos].type == TokenType::Colon) {
-    pos++; // Skip ':'
-    endNode = parseTerm();
+std::unique_ptr<ASTNode> JQParser::parseSubtraction() {
+  auto node = parseTerm();
+  while (match(TokenType::Minus)) {
+    auto right = parseTerm();
+    node = std::make_unique<SubtractionNode>(std::move(node), std::move(right));
   }
-  if (tokens[pos].type != TokenType::RightBracket) {
-    throw std::runtime_error("Expected ']'");
-  }
-  pos++; // Skip ']'
-  return std::make_unique<ASTNode>(ASTNodeType::ARRAY_SLICE,
-                                   std::move(startNode), std::move(endNode));
+  return node;
 }
 
-std::unique_ptr<ASTNode> JQParser::parseIdentifier() {
-  std::string identifier = tokens[pos].value;
-  pos++;
-  return std::make_unique<ASTNode>(ASTNodeType::IDENTIFIER, identifier);
+std::unique_ptr<ASTNode> JQParser::parseLength() {
+  return std::make_unique<LengthNode>();
 }
 
-json::JSONValue JQParser::evaluate(const json::JSONValue &json) {
-  if (!ast) {
-    throw std::runtime_error("AST is not initialized. Call parse() first.");
-  }
-  return evaluateNode(ast.get(), json);
+std::unique_ptr<ASTNode> JQParser::parseKeys() {
+  return std::make_unique<KeysNode>();
 }
 
-json::JSONValue JQParser::evaluateNode(const ASTNode *node,
-                                       const json::JSONValue &json) {
-  if (!node) {
-    throw std::runtime_error("Null AST node");
-  }
+Token JQParser::peek() const { return *current; }
 
-  switch (node->type) {
-  case ASTNodeType::IDENTIFIER:
-    return json[node->identifier].deepCopy();
-  case ASTNodeType::IDENTITY:
-    return json.deepCopy();
-  case ASTNodeType::ARRAY_INDEX: {
-    const auto &array = json.get_array();
-    if (node->number_value < 0 ||
-        static_cast<size_t>(node->number_value) >= array.size()) {
-      throw std::runtime_error("Array index out of bounds");
-    }
-    return array[static_cast<size_t>(node->number_value)].deepCopy();
-  }
-  case ASTNodeType::ARRAY_SLICE: {
-    const auto &array = json.get_array();
-    int start = node->left ? static_cast<int>(node->left->number_value) : 0;
-    int end = node->right ? static_cast<int>(node->right->number_value)
-                          : array.size();
-    start = std::min(start, static_cast<int>(array.size()));
-    end = std::min(end, static_cast<int>(array.size()));
-    // json::JSONArray slice(array.begin() + start, array.begin() + end);
-    std::vector<json::JSONValue> slice;
-    for (int i = 0; i < end - start; ++i) {
-      slice.push_back(array[start + i].deepCopy());
-    }
-    return json::JSONValue(std::move(slice));
-  }
-  case ASTNodeType::OBJECT_ACCESS:
-    return json[node->identifier].deepCopy();
-  case ASTNodeType::OBJECT_ITERATOR: {
-    const auto &array = json.get_array();
-    json::JSONArray result;
-    for (const auto &item : array) {
-      result.push_back(item.deepCopy());
-    }
-    return json::JSONValue(std::move(result));
-  }
-  case ASTNodeType::ADDITION:
-    return applyAddition(evaluateNode(node->left.get(), json),
-                         evaluateNode(node->right.get(), json));
-  case ASTNodeType::SUBTRACTION:
-    return applySubtraction(evaluateNode(node->left.get(), json),
-                            evaluateNode(node->right.get(), json));
-  case ASTNodeType::LENGTH:
-    return json::JSONValue(static_cast<double>(json.get_array().size()));
-  case ASTNodeType::KEYS: {
-    const auto &obj = json.get_object();
-    json::JSONArray keys;
-    for (const auto &pair : obj) {
-      keys.push_back(json::JSONValue(pair.first));
-    }
-    return json::JSONValue(std::move(keys));
-  }
-  case ASTNodeType::LITERAL:
-    return json::JSONValue(node->number_value);
-  case ASTNodeType::PIPE:
-    throw std::runtime_error("PIPE is not supported");
-    // return evaluateNode(node->right.get(),
-    //                     evaluateNode(node->left.get(), json));
-  default:
-    throw std::runtime_error("Unknown ASTNode type");
-  }
+Token JQParser::advance() { return *current++; }
+
+bool JQParser::match(TokenType type) {
+  if (isAtEnd())
+    return false;
+  if (peek().type != type)
+    return false;
+  advance();
+  return true;
 }
 
-json::JSONValue applyAddition(const json::JSONValue &lhs,
-                              const json::JSONValue &rhs) {
-  if (lhs.is_number() && rhs.is_number()) {
-    return json::JSONValue(lhs.get_number() + rhs.get_number());
+void JQParser::consume(TokenType type, const std::string &message) {
+  if (peek().type == type) {
+    advance();
+    return;
   }
-  throw std::runtime_error("Addition is only supported for numbers");
+  throw std::runtime_error(message);
 }
 
-json::JSONValue applySubtraction(const json::JSONValue &lhs,
-                                 const json::JSONValue &rhs) {
-  if (lhs.is_number() && rhs.is_number()) {
-    return json::JSONValue(lhs.get_number() - rhs.get_number());
-  }
-  throw std::runtime_error("Subtraction is only supported for numbers");
-}
+bool JQParser::isAtEnd() const { return current->type == TokenType::End; }
 
-} // namespace jqcpp::expr
+} // namespace jqcpp

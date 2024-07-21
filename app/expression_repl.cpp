@@ -1,5 +1,5 @@
 #include <iostream>
-#include <jqcpp/jqcpp.hpp>
+#include <jqcpp/jq_interpreter.hpp>
 
 std::string read_json_input(std::istream &input) {
   std::string line;

@@ -1,9 +1,8 @@
-#include "jqcpp/jqcpp.hpp"
+#include "jqcpp/jq_interpreter.hpp"
 #include "jqcpp/json_parser.hpp"
 #include "jqcpp/json_value.hpp"
 #include <catch2/catch_all.hpp>
 
-using namespace jqcpp::expr;
 using jqcpp::JQInterpreter;
 using jqcpp::json::JSONParser;
 using jqcpp::json::JSONTokenizer;

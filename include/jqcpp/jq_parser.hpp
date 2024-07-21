@@ -1,46 +1,37 @@
-
+// jq_parser.hpp
 #pragma once
 #include "jq_ast_node.hpp"
 #include "jq_lex.hpp"
-#include "json_value.hpp"
 #include <memory>
 #include <vector>
 
-namespace jqcpp::expr {
+namespace jqcpp {
 
 class JQParser {
 public:
-  explicit JQParser(const std::vector<Token> &tokens)
-      : tokens(tokens), pos(0), ast(nullptr) {}
-
-  explicit JQParser(const std::string &filter_string) : pos(0), ast(nullptr) {
-    jqcpp::expr::ExpressionTokenizer tokenizer;
-    tokens = tokenizer.tokenize(filter_string);
-  }
-
-  void parse() { ast = parseFilter(); }
-
-  json::JSONValue evaluate(const json::JSONValue &json);
+  std::unique_ptr<ASTNode> parse(const std::vector<Token> &tokens);
 
 private:
-  std::vector<Token> tokens;
-  size_t pos;
-  std::unique_ptr<ASTNode> ast;
+  std::vector<Token>::const_iterator current;
+  std::vector<Token>::const_iterator end;
 
-  std::unique_ptr<ASTNode> parseFilter();
-  std::unique_ptr<ASTNode> parseTerm();
   std::unique_ptr<ASTNode> parseExpression();
-  std::unique_ptr<ASTNode> parseArrayIndex();
-  std::unique_ptr<ASTNode> parseArraySlice();
-  std::unique_ptr<ASTNode> parseIdentifier();
-  std::unique_ptr<ASTNode> parseLiteral();
-  std::unique_ptr<ASTNode> parsePipe();
+  std::unique_ptr<ASTNode> parseTerm();
+  std::unique_ptr<ASTNode> parseFieldAccess(std::unique_ptr<ASTNode> base);
+  std::unique_ptr<ASTNode> parseArrayAccess(std::unique_ptr<ASTNode> base);
+  std::unique_ptr<ASTNode> parseSlice(std::unique_ptr<ASTNode> base);
+  std::unique_ptr<ASTNode> parseObjectAccess(std::unique_ptr<ASTNode> base);
+  std::unique_ptr<ASTNode> parseObjectIterator(std::unique_ptr<ASTNode> base);
+  std::unique_ptr<ASTNode> parseAddition();
+  std::unique_ptr<ASTNode> parseSubtraction();
+  std::unique_ptr<ASTNode> parseLength();
+  std::unique_ptr<ASTNode> parseKeys();
 
-  std::unique_ptr<ASTNode> parseField();
-  std::unique_ptr<ASTNode> parseArrayIndexOrSliceOrObjectAccessOrIterator();
-
-  json::JSONValue evaluateNode(const ASTNode *node,
-                               const json::JSONValue &json);
+  Token peek() const;
+  Token advance();
+  bool match(TokenType type);
+  void consume(TokenType type, const std::string &message);
+  bool isAtEnd() const;
 };
 
-} // namespace jqcpp::expr
+} // namespace jqcpp

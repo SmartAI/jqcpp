@@ -5,7 +5,7 @@
 #include <unordered_map>
 #include <vector>
 
-namespace jqcpp::expr {
+namespace jqcpp {
 
 class TokenizerError : public std::runtime_error {
 public:
@@ -45,8 +45,8 @@ enum class TokenType {
   Colon,
   LeftBrace,
   RightBrace,
-  LENGTH,
-  KEYS,
+  Length,
+  Keys,
   End
 };
 
@@ -56,7 +56,7 @@ struct Token {
   Token(TokenType t, std::string v = "") : type(t), value(std::move(v)) {}
 };
 
-class ExpressionTokenizer {
+class JQLexer {
 public:
   std::vector<Token> tokenize(const std::string &expr) {
     std::vector<Token> tokens;
@@ -227,4 +227,4 @@ private:
   }
 };
 
-} // namespace jqcpp::expr
+} // namespace jqcpp
