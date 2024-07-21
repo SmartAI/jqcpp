@@ -36,6 +36,9 @@ private:
   std::unique_ptr<ASTNode> parseLiteral();
   std::unique_ptr<ASTNode> parsePipe();
 
+  std::unique_ptr<ASTNode> parseField();
+  std::unique_ptr<ASTNode> parseArrayIndexOrSliceOrObjectAccessOrIterator();
+
   json::JSONValue evaluateNode(const ASTNode *node,
                                const json::JSONValue &json);
 };

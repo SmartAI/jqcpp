@@ -1,6 +1,9 @@
 
 #include "jqcpp/jq_parser.hpp"
+#include "jqcpp/jq_ast_node.hpp"
+#include "jqcpp/jq_lex.hpp"
 #include "jqcpp/json_value.hpp"
+#include <memory>
 #include <stdexcept>
 
 namespace jqcpp::expr {
@@ -23,21 +26,75 @@ std::unique_ptr<ASTNode> JQParser::parseFilter() {
 }
 
 std::unique_ptr<ASTNode> JQParser::parseTerm() {
-  // This function should be implemented to handle different terms in your
-  // grammar. For simplicity, assume it just parses an identifier or literal.
-  if (tokens[pos].type == TokenType::Identifier) {
-    return parseIdentifier();
+  if (tokens[pos].type == TokenType::Dot) {
+    pos++; // Skip '.'
+    if (tokens[pos].type == TokenType::Identifier) {
+      return parseField();
+    }
+    if (tokens[pos].type == TokenType::LeftBracket) {
+      return parseArrayIndexOrSliceOrObjectAccessOrIterator();
+    }
+    // identity
+    if (tokens[pos].type == TokenType::End) {
+      // identity node
+      return std::make_unique<ASTNode>(ASTNodeType::IDENTITY);
+    }
+    throw std::runtime_error("Unexpected token after '.'");
   }
+  throw std::runtime_error("Unexpected token in Term");
+}
+
+std::unique_ptr<ASTNode> JQParser::parseField() {
+  std::string identifier = tokens[pos].value;
+  pos++;
+  return std::make_unique<ASTNode>(ASTNodeType::IDENTIFIER, identifier);
+}
+
+std::unique_ptr<ASTNode>
+JQParser::parseArrayIndexOrSliceOrObjectAccessOrIterator() {
+  pos++; // Skip '['
+  if (tokens[pos].type == TokenType::RightBracket) {
+    pos++; // Skip ']'
+    return std::make_unique<ASTNode>(ASTNodeType::OBJECT_ITERATOR);
+  }
+  if (tokens[pos].type == TokenType::String) {
+    std::string identifier = tokens[pos].value;
+    pos++;
+    if (tokens[pos].type != TokenType::RightBracket) {
+      throw std::runtime_error("Expected ']' after object access identifier");
+    }
+    pos++; // Skip ']'
+    return std::make_unique<ASTNode>(ASTNodeType::OBJECT_ACCESS, identifier);
+  }
+  std::unique_ptr<ASTNode> startNode;
   if (tokens[pos].type == TokenType::Number) {
-    return parseLiteral();
+    startNode = parseLiteral();
   }
-  if (tokens[pos].type == TokenType::LeftBracket) {
-    return parseArrayIndex();
+  if (tokens[pos].type == TokenType::Colon) {
+    pos++; // Skip ':'
+    std::unique_ptr<ASTNode> endNode;
+    if (tokens[pos].type == TokenType::Number) {
+      endNode = parseLiteral();
+    }
+    if (tokens[pos].type != TokenType::RightBracket) {
+      throw std::runtime_error("Expected ']' after array slice");
+    }
+    pos++; // Skip ']'
+    return std::make_unique<ASTNode>(ASTNodeType::ARRAY_SLICE,
+                                     std::move(startNode), std::move(endNode));
   }
-  if (tokens[pos].type == TokenType::LeftParen) {
-    return parseArraySlice();
+  if (tokens[pos].type != TokenType::RightBracket) {
+    throw std::runtime_error("Expected ']' after array index");
   }
-  throw std::runtime_error("Unexpected token");
+  pos++; // Skip ']'
+  return std::make_unique<ASTNode>(ASTNodeType::ARRAY_INDEX,
+                                   std::move(startNode), nullptr);
+}
+
+std::unique_ptr<ASTNode> JQParser::parseLiteral() {
+  double number_value = std::stod(tokens[pos].value);
+  pos++;
+  return std::make_unique<ASTNode>(ASTNodeType::LITERAL, number_value);
 }
 
 std::unique_ptr<ASTNode> JQParser::parseArrayIndex() {
@@ -73,12 +130,6 @@ std::unique_ptr<ASTNode> JQParser::parseIdentifier() {
   return std::make_unique<ASTNode>(ASTNodeType::IDENTIFIER, identifier);
 }
 
-std::unique_ptr<ASTNode> JQParser::parseLiteral() {
-  double number_value = std::stod(tokens[pos].value);
-  pos++;
-  return std::make_unique<ASTNode>(ASTNodeType::LITERAL, number_value);
-}
-
 json::JSONValue JQParser::evaluate(const json::JSONValue &json) {
   if (!ast) {
     throw std::runtime_error("AST is not initialized. Call parse() first.");
@@ -95,6 +146,8 @@ json::JSONValue JQParser::evaluateNode(const ASTNode *node,
   switch (node->type) {
   case ASTNodeType::IDENTIFIER:
     return json[node->identifier].deepCopy();
+  case ASTNodeType::IDENTITY:
+    return json.deepCopy();
   case ASTNodeType::ARRAY_INDEX: {
     const auto &array = json.get_array();
     if (node->number_value < 0 ||
