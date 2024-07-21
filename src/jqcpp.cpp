@@ -1,11 +1,30 @@
 #include "jqcpp/jqcpp.hpp"
-#include "jqcpp/expression_interpreter.hpp"
 #include "jqcpp/json_parser.hpp"
 #include "jqcpp/json_tokenizer.hpp"
+#include "jqcpp/json_value.hpp"
 #include "jqcpp/pretty_printer.hpp"
-#include <exception>
 
 namespace jqcpp {
+
+JQInterpreter::JQInterpreter(const std::string &input_string)
+    : filter(input_string) {
+  filter.parse();
+}
+
+json::JSONValue JQInterpreter::execute(const json::JSONValue &input) {
+  return filter.evaluate(input);
+}
+
+std::string JQInterpreter::execute(const std::string &input) {
+  json::JSONTokenizer tokenizer;
+  json::JSONParser parser;
+  json::JSONPrinter printer;
+
+  auto tokens = tokenizer.tokenize(input);
+  auto jsonvalue = parser.parse(tokens);
+  auto result = execute(jsonvalue);
+  return printer.print(result);
+}
 
 std::string read_json_input(std::istream &input) {
   std::string line;
@@ -39,17 +58,10 @@ int run_jqcpp(int argc, char *argv[], std::istream &input,
   std::string json_input = read_json_input(input);
 
   try {
-    json::JSONTokenizer tokenizer;
-    json::JSONParser parser;
-    json::JSONPrinter printer;
 
-    auto tokens = tokenizer.tokenize(json_input);
-    auto json_value = parser.parse(tokens);
-
-    expr::JQInterpreter interpreter(jq_expr);
-    const json::JSONValue &result = interpreter.execute(json_value);
-
-    output << printer.print(result) << "\n";
+    JQInterpreter interpreter(jq_expr);
+    auto result = interpreter.execute(json_input);
+    std::cout << result << "\n";
     return 0;
   } catch (const std::exception &e) {
     std::cerr << "Error: " << e.what() << std::endl;

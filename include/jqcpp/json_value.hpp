@@ -100,6 +100,10 @@ struct JSONValue {
     }
     throw std::runtime_error("Unknown JSONValue type in deepCopy");
   }
+
+  // override operations
+  const JSONValue &operator[](std::size_t index) const;
+  const JSONValue &operator[](const std::string &index) const;
 };
 
 inline void jsonObjectInsert(JSONObject &obj, const std::string &key,
@@ -113,6 +117,94 @@ inline void jsonObjectInsert(JSONObject &obj, const std::string &key,
   } else {
     obj.emplace_back(key, std::move(v));
   }
+}
+
+// Addition Operator
+inline JSONValue operator+(const JSONValue &lhs, const JSONValue &rhs) {
+  if (lhs.is_number() && rhs.is_number()) {
+    return JSONValue(lhs.get_number() + rhs.get_number());
+  }
+  if (lhs.is_string() && rhs.is_string()) {
+    return JSONValue(lhs.get_string() + rhs.get_string());
+  }
+  throw std::runtime_error("Invalid types for addition");
+}
+
+// Subtraction Operator
+inline JSONValue operator-(const JSONValue &lhs, const JSONValue &rhs) {
+  if (lhs.is_number() && rhs.is_number()) {
+    return JSONValue(lhs.get_number() - rhs.get_number());
+  }
+  if (lhs.is_string() && rhs.is_string()) {
+    const std::string &lhs_str = lhs.get_string();
+    const std::string &rhs_str = rhs.get_string();
+    size_t pos = lhs_str.find(rhs_str);
+    if (pos != std::string::npos) {
+      std::string result = lhs_str;
+      result.erase(pos, rhs_str.length());
+      return JSONValue(result);
+    }
+    return JSONValue(lhs_str); // return lhs if rhs is not found
+  }
+  throw std::runtime_error("Invalid types for subtraction");
+}
+
+// Length Function
+inline std::size_t length(const JSONValue &json) {
+  if (json.is_array()) {
+    return json.get_array().size();
+  }
+  if (json.is_object()) {
+    return json.get_object().size();
+  }
+  if (json.is_string()) {
+    return json.get_string().length();
+  }
+  throw std::runtime_error("Invalid type for length");
+}
+
+// Keys Function
+inline JSONArray keys(const JSONValue &json) {
+  JSONArray result;
+  if (json.is_object()) {
+    for (const auto &pair : json.get_object()) {
+      result.push_back(JSONValue(pair.first));
+    }
+    return result;
+  }
+  if (json.is_array()) {
+    for (std::size_t i = 0; i < json.get_array().size(); ++i) {
+      result.push_back(JSONValue(static_cast<double>(i)));
+    }
+    return result;
+  }
+  throw std::runtime_error("Invalid type for keys");
+}
+
+inline const JSONValue &JSONValue::operator[](std::size_t index) const {
+  if (!is_array()) {
+    throw std::runtime_error("Not an array");
+  }
+  const auto &array = get_array();
+  if (index >= array.size()) {
+    throw std::runtime_error("Array index out of bounds");
+  }
+  return array[index];
+}
+
+// Overload operator[] for object access
+inline const JSONValue &JSONValue::operator[](const std::string &key) const {
+  if (!is_object()) {
+    throw std::runtime_error("Not an object");
+  }
+  const auto &object = get_object();
+  auto it =
+      std::find_if(object.begin(), object.end(),
+                   [&key](const auto &pair) { return pair.first == key; });
+  if (it == object.end()) {
+    throw std::runtime_error("Object key not found");
+  }
+  return it->second;
 }
 
 } // namespace jqcpp::json

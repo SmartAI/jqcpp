@@ -1,5 +1,5 @@
 #include <iostream>
-#include <jqcpp/expression_interpreter.hpp>
+#include <jqcpp/jqcpp.hpp>
 
 std::string read_json_input(std::istream &input) {
   std::string line;
@@ -15,8 +15,8 @@ int main(int argc, char *argv[]) {
     if (filter == "q") {
       break;
     }
-    jqcpp::expr::JQInterpreter interpreter(filter);
-    std::cout << interpreter.prettyPrint() << "\n";
+    jqcpp::JQInterpreter interpreter(filter);
+    // std::cout << interpreter.prettyPrint() << "\n";
   };
   return 0;
 }

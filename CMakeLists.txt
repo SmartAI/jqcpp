@@ -14,6 +14,8 @@ find_package(Catch2  REQUIRED)
 
 include_directories(${PROJECT_SOURCE_DIR}/include)
 
+file(GLOB JQCPP_SOURCES "src/*.cpp")
+
 # JSON Tokenizer test
 add_executable(test_json_tokenizer tests/test_json_tokenizer.cpp src/json_tokenizer.cpp)
 target_link_libraries(test_json_tokenizer PRIVATE Catch2::Catch2WithMain)
@@ -27,16 +29,14 @@ add_executable(test_pretty_printer tests/test_pretty_printer.cpp src/json_parser
 target_link_libraries(test_pretty_printer PRIVATE Catch2::Catch2WithMain)
 
 # expression tokenizer test
-add_executable(test_expression_tokenizer tests/test_expression_tokenizer.cpp)
+add_executable(test_expression_tokenizer tests/test_expression_tokenizer.cpp ${JQCPP_SOURCES})
 target_link_libraries(test_expression_tokenizer PRIVATE Catch2::Catch2WithMain)
 
 # expression interpreter test
-add_executable(test_expression_interpreter tests/test_expression_interpreter.cpp 
-  src/json_parser.cpp src/json_tokenizer.cpp)
+add_executable(test_expression_interpreter tests/test_expression_interpreter.cpp ${JQCPP_SOURCES})
 target_link_libraries(test_expression_interpreter PRIVATE Catch2::Catch2WithMain)
 
 # jqcpp test
-file(GLOB JQCPP_SOURCES "src/*.cpp")
 add_executable(test_jqcpp tests/test_jqcpp.cpp ${JQCPP_SOURCES})
 target_link_libraries(test_jqcpp PRIVATE Catch2::Catch2WithMain)
 

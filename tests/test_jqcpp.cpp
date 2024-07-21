@@ -1,8 +1,6 @@
-#include "jqcpp/expression_interpreter.hpp"
 #include "jqcpp/jqcpp.hpp"
 #include "jqcpp/json_parser.hpp"
 #include "jqcpp/json_tokenizer.hpp"
-#include "jqcpp/pretty_printer.hpp"
 #include <catch2/catch_all.hpp>
 #include <sstream>
 

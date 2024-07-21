@@ -1,4 +1,4 @@
-#include "jqcpp/expression_tokenizer.hpp"
+#include "jqcpp/jq_lex.hpp"
 #include <catch2/catch_all.hpp>
 
 using namespace jqcpp::expr;

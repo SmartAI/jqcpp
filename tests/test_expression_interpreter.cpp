@@ -1,10 +1,10 @@
-#include "jqcpp/expression_interpreter.hpp"
+#include "jqcpp/jqcpp.hpp"
 #include "jqcpp/json_parser.hpp"
 #include "jqcpp/json_value.hpp"
 #include <catch2/catch_all.hpp>
-#include <iostream>
 
 using namespace jqcpp::expr;
+using jqcpp::JQInterpreter;
 using jqcpp::json::JSONParser;
 using jqcpp::json::JSONTokenizer;
 using jqcpp::json::JSONValue;
@@ -36,8 +36,6 @@ TEST_CASE("Expression parser handles simple expressions", "[parser]") {
 
   SECTION("Arithmetic") {
     JQInterpreter interpreter(".age + 5");
-
-    std::cout << ".age + 5 : " << interpreter.prettyPrint() << "\n";
     const auto &result = interpreter.execute(input);
     CHECK(result.is_number());
     CHECK(result.get_number() == 35.0);
@@ -51,8 +49,6 @@ TEST_CASE("Expression parser handles array operations", "[parser]") {
 
   SECTION("Array access") {
     JQInterpreter interpreter(".[1]");
-    std::cout << "DEBUG: -----------------------\n";
-    std::cout << interpreter.prettyPrint() << "\n";
     const auto &result = interpreter.execute(input);
     CHECK(result.is_number());
     CHECK(result.get_number() == 2.0);
