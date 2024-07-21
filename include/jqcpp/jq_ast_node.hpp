@@ -69,15 +69,16 @@ class ArraySliceNode : public ASTNode {
 public:
   ArraySliceNode(std::unique_ptr<ASTNode> array, std::unique_ptr<ASTNode> start,
                  std::unique_ptr<ASTNode> end)
-      : ASTNode(ASTNodeType::ArraySlice, "", std::move(array), nullptr) {
-    if (start)
-      this->left = std::move(start);
-    if (end)
-      this->right = std::move(end);
-  }
+      : ASTNode(ASTNodeType::ArraySlice), array(std::move(array)),
+        start(std::move(start)), end(std::move(end)) {}
+
   json::JSONValue accept(ASTVisitor &visitor) const override {
     return visitor.visitArraySlice(*this);
   }
+
+  std::unique_ptr<ASTNode> array;
+  std::unique_ptr<ASTNode> start;
+  std::unique_ptr<ASTNode> end;
 };
 
 class ObjectAccessNode : public ASTNode {

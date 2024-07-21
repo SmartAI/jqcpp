@@ -62,44 +62,50 @@ JQParser::parseFieldAccess(std::unique_ptr<ASTNode> base) {
 
 std::unique_ptr<ASTNode>
 JQParser::parseArrayAccess(std::unique_ptr<ASTNode> base) {
+  if (match(TokenType::Colon)) {
+    // 处理 [:something] 的情况
+    return parseSlice(std::move(base), nullptr);
+  }
+
+  std::unique_ptr<ASTNode> start;
   if (match(TokenType::Number)) {
-    auto index =
-        std::make_unique<LiteralNode>(std::stod(std::prev(current)->value));
-    consume(TokenType::RightBracket, "Expected ']' after array index");
-    auto node =
-        std::make_unique<ArrayIndexNode>(std::move(base), std::move(index));
+    start = std::make_unique<LiteralNode>(std::stod(std::prev(current)->value));
+  }
 
-    if (match(TokenType::Dot)) {
-      return parseFieldAccess(std::move(node));
-    } else if (match(TokenType::LeftBracket)) {
-      return parseArrayAccess(std::move(node));
+  if (match(TokenType::Colon)) {
+    return parseSlice(std::move(base), std::move(start));
+  }
+
+  if (match(TokenType::RightBracket)) {
+    if (start) {
+      // 这是一个简单的数组索引
+      auto node =
+          std::make_unique<ArrayIndexNode>(std::move(base), std::move(start));
+      if (match(TokenType::Dot)) {
+        return parseFieldAccess(std::move(node));
+      } else if (match(TokenType::LeftBracket)) {
+        return parseArrayAccess(std::move(node));
+      }
+      return node;
+    } else {
+      // 这是一个对象迭代器
+      return std::make_unique<ObjectIteratorNode>(std::move(base));
     }
-
-    return node;
-  } else if (match(TokenType::Colon)) {
-    return parseSlice(std::move(base));
-  } else if (match(TokenType::RightBracket)) {
-    return std::make_unique<ObjectIteratorNode>(std::move(base));
   }
 
   throw std::runtime_error("Expected number, ':', or ']' after '['");
 }
 
-std::unique_ptr<ASTNode> JQParser::parseSlice(std::unique_ptr<ASTNode> base) {
-  std::unique_ptr<ASTNode> start, end;
-
-  if (!match(TokenType::Colon)) {
-    start = std::make_unique<LiteralNode>(std::stod(std::prev(current)->value));
-    consume(TokenType::Colon, "Expected ':' in array slice");
-  }
+std::unique_ptr<ASTNode> JQParser::parseSlice(std::unique_ptr<ASTNode> base,
+                                              std::unique_ptr<ASTNode> start) {
+  std::unique_ptr<ASTNode> end;
 
   if (!match(TokenType::RightBracket)) {
-    end = std::make_unique<LiteralNode>(std::stod(current->value));
-    consume(TokenType::Number,
-            "Expected number or ']' after ':' in array slice");
+    if (match(TokenType::Number)) {
+      end = std::make_unique<LiteralNode>(std::stod(std::prev(current)->value));
+    }
+    consume(TokenType::RightBracket, "Expected ']' after array slice");
   }
-
-  consume(TokenType::RightBracket, "Expected ']' after array slice");
 
   auto node = std::make_unique<ArraySliceNode>(
       std::move(base), std::move(start), std::move(end));

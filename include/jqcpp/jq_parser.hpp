@@ -19,7 +19,8 @@ private:
   std::unique_ptr<ASTNode> parseTerm();
   std::unique_ptr<ASTNode> parseFieldAccess(std::unique_ptr<ASTNode> base);
   std::unique_ptr<ASTNode> parseArrayAccess(std::unique_ptr<ASTNode> base);
-  std::unique_ptr<ASTNode> parseSlice(std::unique_ptr<ASTNode> base);
+  std::unique_ptr<ASTNode> parseSlice(std::unique_ptr<ASTNode> base,
+                                      std::unique_ptr<ASTNode> start);
   std::unique_ptr<ASTNode> parseObjectAccess(std::unique_ptr<ASTNode> base);
   std::unique_ptr<ASTNode> parseObjectIterator(std::unique_ptr<ASTNode> base);
   std::unique_ptr<ASTNode> parseAddition();

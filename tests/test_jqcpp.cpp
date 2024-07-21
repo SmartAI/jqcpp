@@ -274,3 +274,118 @@ TEST_CASE("Complex nested structure", "[filter]") {
 //   end"; std::string expected = "\"warm\"\n"; CHECK(run_jqcpp_test(input,
 //   filter) == expected);
 // }
+//
+
+TEST_CASE("JQ interpreter handles complex nested expressions",
+          "[jq][complex]") {
+  SECTION("Nested object access") {
+    std::string input = R"(
+            {
+                "foo": {
+                    "bar": {
+                        "baz": 42
+                    }
+                }
+            }
+        )";
+
+    CHECK(run_jqcpp_test(input, ".foo.bar.baz") == "42\n");
+  }
+
+  SECTION("Array slicing with nested object access") {
+    std::string input = R"(
+            {
+                "foo": [
+                    {"val": 1},
+                    {"val": 2},
+                    {"val": 3},
+                    {"val": 4},
+                    {"val": 5}
+                ]
+            }
+        )";
+
+    CHECK(run_jqcpp_test(input, ".foo[1:4].val") == "[2,3,4]\n");
+  }
+
+  SECTION("Arithmetic with object and array access") {
+    std::string input = R"(
+            {
+                "foo": {
+                    "bar": 10
+                },
+                "a": [5, 15, 25]
+            }
+        )";
+
+    CHECK(run_jqcpp_test(input, ".foo.bar + .a[1]") == "25\n");
+  }
+
+  SECTION("Complex nested expression with multiple operations") {
+    std::string input = R"(
+            {
+                "users": [
+                    {"name": "Alice", "age": 30},
+                    {"name": "Bob", "age": 25},
+                    {"name": "Charlie", "age": 35},
+                    {"name": "David", "age": 28}
+                ],
+                "threshold": 2
+            }
+        )";
+
+    CHECK(run_jqcpp_test(input, ".users[1:3].age + .threshold") == "[27,37]\n");
+  }
+
+  SECTION("Combining length and arithmetic operations") {
+    std::string input = R"(
+            {
+                "items": [1, 2, 3, 4, 5],
+                "factor": 10
+            }
+        )";
+
+    CHECK(run_jqcpp_test(input, "length(.items) * .factor") == "50\n");
+  }
+
+  SECTION("Using keys with nested access") {
+    std::string input = R"(
+            {
+                "data": {
+                    "x": 1,
+                    "y": 2,
+                    "z": 3
+                }
+            }
+        )";
+
+    CHECK(run_jqcpp_test(input, "keys(.data)[1]") == "\"y\"\n");
+  }
+
+  SECTION("Complex expression with multiple array and object accesses") {
+    std::string input = R"(
+            {
+                "teams": [
+                    {"name": "Red", "scores": [10, 20, 30]},
+                    {"name": "Blue", "scores": [15, 25, 35]},
+                    {"name": "Green", "scores": [12, 22, 32]}
+                ],
+                "bonus": 5
+            }
+        )";
+
+    CHECK(run_jqcpp_test(input, ".teams[1].scores[1] + .bonus") == "30\n");
+  }
+
+  SECTION("Nested array slicing and object access") {
+    std::string input = R"(
+            [
+                {"values": [1, 2, 3, 4, 5]},
+                {"values": [6, 7, 8, 9, 10]},
+                {"values": [11, 12, 13, 14, 15]}
+            ]
+        )";
+
+    CHECK(run_jqcpp_test(input, ".[1:3].values[2:4]") == "[[8,9],[13,14]]\n");
+  }
+}

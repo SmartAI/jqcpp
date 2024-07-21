@@ -10,55 +10,65 @@ json::JSONValue JQEvaluator::evaluate(const ASTNode &node,
   return node.accept(*this);
 }
 
-json::JSONValue JQEvaluator::visitIdentity(const ASTNode &node) {
+json::JSONValue JQEvaluator::visitIdentity(const IdentityNode &node) {
   return currentInput->deepCopy();
 }
 
-json::JSONValue JQEvaluator::visitField(const ASTNode &node) {
+json::JSONValue JQEvaluator::visitField(const FieldNode &node) {
   if (!currentInput->is_object()) {
     throw std::runtime_error("Cannot access field of non-object value");
   }
   return (*currentInput)[node.value].deepCopy();
 }
 
-json::JSONValue JQEvaluator::visitArrayIndex(const ASTNode &node) {
+json::JSONValue JQEvaluator::visitArrayIndex(const ArrayIndexNode &node) {
   if (!currentInput->is_array()) {
     throw std::runtime_error("Cannot access index of non-array value");
   }
   const auto &array = currentInput->get_array();
   size_t index = static_cast<size_t>(std::stoi(node.right->value));
   if (index >= array.size()) {
-    throw std::runtime_error("Array index out of bounds");
+    // throw std::runtime_error("Array index out of bounds");
+    return json::JSONValue(nullptr);
   }
   return array[index].deepCopy();
 }
 
-json::JSONValue JQEvaluator::visitArraySlice(const ASTNode &node) {
+json::JSONValue JQEvaluator::visitArraySlice(const ArraySliceNode &node) {
   if (!currentInput->is_array()) {
     throw std::runtime_error("Cannot slice non-array value");
   }
+
   const auto &array = currentInput->get_array();
-  size_t start =
-      node.left ? static_cast<size_t>(std::stoi(node.left->value)) : 0;
-  size_t end = node.right ? static_cast<size_t>(std::stoi(node.right->value))
-                          : array.size();
+  size_t start = 0;
+  size_t end = array.size();
+
+  if (node.start) {
+    start = static_cast<size_t>(node.start->accept(*this).get_number());
+  }
+  if (node.end) {
+    end = static_cast<size_t>(node.end->accept(*this).get_number());
+  }
+
   start = std::min(start, array.size());
   end = std::min(end, array.size());
 
   std::vector<json::JSONValue> values;
-  for (int i = 0; i < end - start; ++i) {
-    values.push_back(array[start + i].deepCopy());
+  for (size_t i = start; i < end; ++i) {
+    values.push_back(array[i].deepCopy());
   }
+
   return json::JSONValue(std::move(values));
 }
 
-json::JSONValue JQEvaluator::visitObjectAccess(const ASTNode &node) {
+json::JSONValue JQEvaluator::visitObjectAccess(const ObjectAccessNode &node) {
   auto result = node.left->accept(*this);
   currentInput = &result;
   return node.right->accept(*this);
 }
 
-json::JSONValue JQEvaluator::visitObjectIterator(const ASTNode &node) {
+json::JSONValue
+JQEvaluator::visitObjectIterator(const ObjectIteratorNode &node) {
   if (!currentInput->is_object()) {
     throw std::runtime_error("Cannot iterate over non-object value");
   }
@@ -70,7 +80,7 @@ json::JSONValue JQEvaluator::visitObjectIterator(const ASTNode &node) {
   return json::JSONValue(std::move(result));
 }
 
-json::JSONValue JQEvaluator::visitAddition(const ASTNode &node) {
+json::JSONValue JQEvaluator::visitAddition(const AdditionNode &node) {
   auto left = node.left->accept(*this);
   auto right = node.right->accept(*this);
   if (left.is_number() && right.is_number()) {
@@ -79,7 +89,7 @@ json::JSONValue JQEvaluator::visitAddition(const ASTNode &node) {
   throw std::runtime_error("Addition is only supported for numbers");
 }
 
-json::JSONValue JQEvaluator::visitSubtraction(const ASTNode &node) {
+json::JSONValue JQEvaluator::visitSubtraction(const SubtractionNode &node) {
   auto left = node.left->accept(*this);
   auto right = node.right->accept(*this);
   if (left.is_number() && right.is_number()) {
@@ -88,7 +98,7 @@ json::JSONValue JQEvaluator::visitSubtraction(const ASTNode &node) {
   throw std::runtime_error("Subtraction is only supported for numbers");
 }
 
-json::JSONValue JQEvaluator::visitLength(const ASTNode &node) {
+json::JSONValue JQEvaluator::visitLength(const LengthNode &node) {
   if (currentInput->is_array()) {
     return json::JSONValue(
         static_cast<double>(currentInput->get_array().size()));
@@ -103,7 +113,7 @@ json::JSONValue JQEvaluator::visitLength(const ASTNode &node) {
       "Length is only supported for arrays, strings, and objects");
 }
 
-json::JSONValue JQEvaluator::visitKeys(const ASTNode &node) {
+json::JSONValue JQEvaluator::visitKeys(const KeysNode &node) {
   if (!currentInput->is_object()) {
     throw std::runtime_error("Keys is only supported for objects");
   }
@@ -115,13 +125,13 @@ json::JSONValue JQEvaluator::visitKeys(const ASTNode &node) {
   return json::JSONValue(std::move(keys));
 }
 
-json::JSONValue JQEvaluator::visitPipe(const ASTNode &node) {
+json::JSONValue JQEvaluator::visitPipe(const PipeNode &node) {
   auto leftResult = node.left->accept(*this);
   currentInput = &leftResult;
   return node.right->accept(*this);
 }
 
-json::JSONValue JQEvaluator::visitLiteral(const ASTNode &node) {
+json::JSONValue JQEvaluator::visitLiteral(const LiteralNode &node) {
   return json::JSONValue(std::stod(node.value));
 }
 } // namespace jqcpp

@@ -5,22 +5,35 @@
 namespace jqcpp {
 
 class ASTNode;
+class IdentityNode;
+class FieldNode;
+class ArrayIndexNode;
+class ArraySliceNode;
+class ObjectAccessNode;
+class ObjectIteratorNode;
+class AdditionNode;
+class SubtractionNode;
+class LengthNode;
+class KeysNode;
+class PipeNode;
+class LiteralNode;
 
 class ASTVisitor {
 public:
   virtual ~ASTVisitor() = default;
-  virtual json::JSONValue visitIdentity(const ASTNode &node) = 0;
-  virtual json::JSONValue visitField(const ASTNode &node) = 0;
-  virtual json::JSONValue visitArrayIndex(const ASTNode &node) = 0;
-  virtual json::JSONValue visitArraySlice(const ASTNode &node) = 0;
-  virtual json::JSONValue visitObjectAccess(const ASTNode &node) = 0;
-  virtual json::JSONValue visitObjectIterator(const ASTNode &node) = 0;
-  virtual json::JSONValue visitAddition(const ASTNode &node) = 0;
-  virtual json::JSONValue visitSubtraction(const ASTNode &node) = 0;
-  virtual json::JSONValue visitLength(const ASTNode &node) = 0;
-  virtual json::JSONValue visitKeys(const ASTNode &node) = 0;
-  virtual json::JSONValue visitPipe(const ASTNode &node) = 0;
-  virtual json::JSONValue visitLiteral(const ASTNode &node) = 0;
+  virtual json::JSONValue visitIdentity(const IdentityNode &node) = 0;
+  virtual json::JSONValue visitField(const FieldNode &node) = 0;
+  virtual json::JSONValue visitArrayIndex(const ArrayIndexNode &node) = 0;
+  virtual json::JSONValue visitArraySlice(const ArraySliceNode &node) = 0;
+  virtual json::JSONValue visitObjectAccess(const ObjectAccessNode &node) = 0;
+  virtual json::JSONValue
+  visitObjectIterator(const ObjectIteratorNode &node) = 0;
+  virtual json::JSONValue visitAddition(const AdditionNode &node) = 0;
+  virtual json::JSONValue visitSubtraction(const SubtractionNode &node) = 0;
+  virtual json::JSONValue visitLength(const LengthNode &node) = 0;
+  virtual json::JSONValue visitKeys(const KeysNode &node) = 0;
+  virtual json::JSONValue visitPipe(const PipeNode &node) = 0;
+  virtual json::JSONValue visitLiteral(const LiteralNode &node) = 0;
 };
 
 } // namespace jqcpp
