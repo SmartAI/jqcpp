@@ -24,14 +24,29 @@ json::JSONValue JQEvaluator::visitField(const FieldNode &node) {
 }
 
 json::JSONValue JQEvaluator::visitArrayIndex(const ArrayIndexNode &node) {
-  if (!currentContext().is_array()) {
+
+  auto leftResult = node.left->accept(*this);
+
+  if (!leftResult.is_array()) {
     throw std::runtime_error("Cannot access index of non-array value");
   }
-  const auto &array = currentContext().get_array();
-  size_t index = static_cast<size_t>(std::stoi(node.right->value));
+
+  const auto &array = leftResult.get_array();
+
+  // 评估右侧（索引）表达式
+  auto indexResult = node.right->accept(*this);
+
+  // 确保索引是一个数字
+  if (!indexResult.is_number()) {
+    throw std::runtime_error("Array index must be a number");
+  }
+
+  size_t index = static_cast<size_t>(indexResult.get_number());
+
   if (index >= array.size()) {
     return json::JSONValue(nullptr);
   }
+
   return array[index].deepCopy();
 }
 
