@@ -26,7 +26,7 @@ json::JSONValue JQEvaluator::visitArrayIndex(const ASTNode &node) {
     throw std::runtime_error("Cannot access index of non-array value");
   }
   const auto &array = currentInput->get_array();
-  size_t index = static_cast<size_t>(std::stoi(node.value));
+  size_t index = static_cast<size_t>(std::stoi(node.right->value));
   if (index >= array.size()) {
     throw std::runtime_error("Array index out of bounds");
   }
