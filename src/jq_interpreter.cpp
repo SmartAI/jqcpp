@@ -1,6 +1,8 @@
 // jq_interpreter.cpp
 #include "jqcpp/jq_interpreter.hpp"
 #include "jqcpp/jq_lex.hpp"
+#include "jqcpp/json_parser.hpp"
+#include "jqcpp/json_tokenizer.hpp"
 #include "jqcpp/pretty_printer.hpp"
 #include <iostream>
 
@@ -46,11 +48,15 @@ int run_jqcpp(int argc, char *argv[], std::istream &input,
   std::string json_input = read_json_input(input);
 
   try {
+    // parse json object
+    json::JSONTokenizer lexer;
+    json::JSONParser parser;
+    auto jvalue = parser.parse(lexer.tokenize(json_input));
 
     JQInterpreter interpreter(jq_expr);
-    auto result = interpreter.execute(json_input);
+    auto result = interpreter.execute(jvalue);
     json::JSONPrinter printer;
-    std::cout << printer.print(result) << std::endl;
+    output << printer.print(result) << std::endl;
     return 0;
   } catch (const std::exception &e) {
     std::cerr << "Error: " << e.what() << std::endl;
