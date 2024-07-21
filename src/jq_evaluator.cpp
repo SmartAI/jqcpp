@@ -51,11 +51,14 @@ json::JSONValue JQEvaluator::visitArrayIndex(const ArrayIndexNode &node) {
 }
 
 json::JSONValue JQEvaluator::visitArraySlice(const ArraySliceNode &node) {
-  if (!currentContext().is_array()) {
+
+  auto array_node = node.array->accept(*this);
+
+  if (!array_node.is_array()) {
     throw std::runtime_error("Cannot slice non-array value");
   }
 
-  const auto &array = currentContext().get_array();
+  const auto &array = array_node.get_array();
   size_t start = 0;
   size_t end = array.size();
 
