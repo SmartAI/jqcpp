@@ -1,13 +1,16 @@
 // jq_evaluator.hpp
 #pragma once
-#include "jq_ast_visitor.hpp"
-#include "json_value.hpp"
+
+#include "jqcpp/jq_ast_visitor.hpp"
+#include "jqcpp/json_value.hpp"
+#include <stack>
 
 namespace jqcpp {
 
 class JQEvaluator : public ASTVisitor {
 public:
   json::JSONValue evaluate(const ASTNode &node, const json::JSONValue &input);
+
   json::JSONValue visitIdentity(const IdentityNode &node) override;
   json::JSONValue visitField(const FieldNode &node) override;
   json::JSONValue visitArrayIndex(const ArrayIndexNode &node) override;
@@ -22,7 +25,15 @@ public:
   json::JSONValue visitLiteral(const LiteralNode &node) override;
 
 private:
-  const json::JSONValue *currentInput;
+  std::stack<const json::JSONValue *> contextStack;
+
+  const json::JSONValue &currentContext() const { return *contextStack.top(); }
+
+  void pushContext(const json::JSONValue &context) {
+    contextStack.push(&context);
+  }
+
+  void popContext() { contextStack.pop(); }
 };
 
 } // namespace jqcpp
