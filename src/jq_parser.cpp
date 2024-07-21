@@ -32,7 +32,10 @@ std::unique_ptr<ASTNode> JQParser::parseExpression() {
 }
 
 std::unique_ptr<ASTNode> JQParser::parseTerm() {
-  if (match(TokenType::Dot)) {
+  if (match(TokenType::Number)) {
+    return std::make_unique<NumberLiteralNode>(
+        std::stod(std::prev(current)->value));
+  } else if (match(TokenType::Dot)) {
     if (isAtEnd() || peek().type == TokenType::Pipe) {
       return std::make_unique<IdentityNode>();
     }

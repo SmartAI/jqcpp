@@ -17,6 +17,7 @@ class LengthNode;
 class KeysNode;
 class PipeNode;
 class LiteralNode;
+class NumberLiteralNode;
 
 class ASTVisitor {
 public:
@@ -34,6 +35,7 @@ public:
   virtual json::JSONValue visitKeys(const KeysNode &node) = 0;
   virtual json::JSONValue visitPipe(const PipeNode &node) = 0;
   virtual json::JSONValue visitLiteral(const LiteralNode &node) = 0;
+  virtual json::JSONValue visitNumberLiteral(const NumberLiteralNode &node) = 0;
 };
 
 } // namespace jqcpp

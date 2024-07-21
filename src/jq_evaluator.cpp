@@ -160,4 +160,8 @@ json::JSONValue JQEvaluator::visitLiteral(const LiteralNode &node) {
   return json::JSONValue(std::stod(node.value));
 }
 
+json::JSONValue JQEvaluator::visitNumberLiteral(const NumberLiteralNode &node) {
+  return json::JSONValue(std::move(node.value));
+}
+
 } // namespace jqcpp

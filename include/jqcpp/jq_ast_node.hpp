@@ -18,7 +18,8 @@ enum class ASTNodeType {
   Length,
   Keys,
   Pipe,
-  Literal
+  Literal,
+  NumberLiteralNode,
 };
 
 class ASTNode {
@@ -152,6 +153,18 @@ public:
   json::JSONValue accept(ASTVisitor &visitor) const override {
     return visitor.visitLiteral(*this);
   }
+};
+
+class NumberLiteralNode : public ASTNode {
+
+public:
+  NumberLiteralNode(double value)
+      : ASTNode(ASTNodeType::NumberLiteralNode), value(value) {}
+  json::JSONValue accept(ASTVisitor &visitor) const override {
+    return visitor.visitNumberLiteral(*this);
+  }
+
+  double value;
 };
 
 } // namespace jqcpp

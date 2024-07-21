@@ -23,6 +23,7 @@ public:
   json::JSONValue visitKeys(const KeysNode &node) override;
   json::JSONValue visitPipe(const PipeNode &node) override;
   json::JSONValue visitLiteral(const LiteralNode &node) override;
+  json::JSONValue visitNumberLiteral(const NumberLiteralNode &node) override;
 
 private:
   std::stack<const json::JSONValue *> contextStack;
