@@ -89,6 +89,8 @@ private:
         {"and", TokenType::And},
         {"or", TokenType::Or},
         {"not", TokenType::Not},
+        {"length", TokenType::Length},
+        {"keys", TokenType::Keys},
         {"null", TokenType::Identifier}, // Treat null as a special identifier
         {"true", TokenType::Identifier}, // Treat true as a special identifier
         {"false", TokenType::Identifier} // Treat false as a special identifier
