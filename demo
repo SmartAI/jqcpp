@@ -1,0 +1,16 @@
+#! /usr/bin/env bash
+
+# Print an error message and exit.
+panic()
+{
+	echo "ERROR: $@"
+	exit 1
+}
+
+# Get the directory in which the currently running script is located.
+cmd_dir=$(dirname "$0") || panic "cannot determine command directory"
+
+jqcpp="$cmd_dir/jqcpp"
+
+echo "Running jqcpp prgram"
+$hello_program || panic "hello program failed"

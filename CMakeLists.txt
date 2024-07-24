@@ -65,12 +65,8 @@ add_custom_target(run_tests
             test_jqcpp
 )
 
-# Installation rules
-# install(TARGETS json_parser
-#     ARCHIVE DESTINATION lib
-#     LIBRARY DESTINATION lib
-#     RUNTIME DESTINATION bin
-# )
-# install(DIRECTORY include/jqcpp DESTINATION include)
-#
+# Install the hello and goodbye programs.
+install(TARGETS jqcpp DESTINATION bin)
 
+# Install the demo script.
+install(PROGRAMS demo DESTINATION bin)
