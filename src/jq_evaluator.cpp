@@ -93,14 +93,24 @@ json::JSONValue JQEvaluator::visitObjectAccess(const ObjectAccessNode &node) {
 json::JSONValue
 JQEvaluator::visitObjectIterator(const ObjectIteratorNode &node) {
   auto leftResult = node.left->accept(*this);
-  if (!leftResult.is_object()) {
-    throw std::runtime_error("Cannot iterate over non-object value");
+  if (!(leftResult.is_object() || leftResult.is_array())) {
+    throw std::runtime_error(
+        "Cannot iterate over non-object or non-array value");
   }
-  const auto &obj = leftResult.get_object();
+
   json::JSONArray result;
-  for (const auto &[key, value] : obj) {
-    result.push_back(value.deepCopy());
+  if (leftResult.is_object()) {
+    const auto &obj = leftResult.get_object();
+    for (const auto &[key, value] : obj) {
+      result.push_back(value.deepCopy());
+    }
+  } else {
+    const auto &obj = leftResult.get_array();
+    for (const auto &value : obj) {
+      result.push_back(value.deepCopy());
+    }
   }
+
   return json::JSONValue(std::move(result));
 }
 
