@@ -12,6 +12,7 @@ include(${CMAKE_SOURCE_DIR}/Sanitizers.cmake)
 
 find_package(Catch2  REQUIRED)
 
+
 include_directories(${PROJECT_SOURCE_DIR}/include)
 
 file(GLOB JQCPP_SOURCES "src/*.cpp")
