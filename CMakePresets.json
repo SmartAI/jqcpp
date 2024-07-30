@@ -1,0 +1,20 @@
+{
+  "version": 8,
+  "configurePresets": [
+    {
+      "name": "default",
+      "displayName": "default",
+      "description": "Using compilers: C = /opt/llvm/bin/clang, CXX = /opt/llvm/bin/clang++",
+      "binaryDir": "${sourceDir}/out/build/${presetName}",
+      "cacheVariables": {
+        "CMAKE_INSTALL_PREFIX": "${sourceDir}/out/install/${presetName}",
+        "CMAKE_C_COMPILER": "/opt/llvm/bin/clang",
+        "CMAKE_CXX_COMPILER": "/opt/llvm/bin/clang++",
+        "CMAKE_BUILD_TYPE": "Debug",
+        "ENABLE_ASAN": true,
+        "ENABLE_UBSAN": true,
+        "ENABLE_LSAN": true
+      }
+    }
+  ]
+}
