@@ -13,8 +13,12 @@ std::string run_jqcpp_test(const std::string &input,
   std::istringstream iss(input);
   std::ostringstream oss;
   const char *argv[] = {"jqcpp", filter.c_str()};
-  run_jqcpp(2, const_cast<char **>(argv), iss, oss);
-  return oss.str();
+  try {
+    run_jqcpp(2, const_cast<char **>(argv), iss, oss);
+    return oss.str();
+  } catch (...) {
+    throw std::runtime_error("Exception");
+  }
 }
 
 std::string pretty_json(const std::string &s) {
@@ -396,5 +400,88 @@ TEST_CASE("JQ interpreter handles complex nested expressions",
         )";
 
     CHECK(run_jqcpp_test(input, ".[1].values[2:4]") == pretty_json("[8,9]"));
+  }
+}
+
+TEST_CASE("End-to-end jqcpp functionality tests", "[e2e]") {
+  SECTION("Identity filter") {
+    std::string input = R"({"name": "John", "age": 30})";
+    std::string filter = ".";
+    std::string expected = pretty_json(input);
+    CHECK(run_jqcpp_test(input, filter) == expected);
+  }
+
+  SECTION("Simple object property access") {
+    std::string input = R"({"name": "Alice", "age": 25})";
+    std::string filter = ".name";
+    std::string expected = "\"Alice\"\n";
+    CHECK(run_jqcpp_test(input, filter) == expected);
+  }
+
+  SECTION("Nested object property access") {
+    std::string input = R"({"user": {"name": "Bob", "details": {"age": 28}}})";
+    std::string filter = ".user.details.age";
+    std::string expected = "28\n";
+    CHECK(run_jqcpp_test(input, filter) == expected);
+  }
+
+  SECTION("Array element access") {
+    std::string input = R"(["apple", "banana", "cherry"])";
+    std::string filter = ".[1]";
+    std::string expected = "\"banana\"\n";
+    CHECK(run_jqcpp_test(input, filter) == expected);
+  }
+
+  SECTION("Array slicing") {
+    std::string input = R"([0, 1, 2, 3, 4, 5])";
+    std::string filter = ".[2:5]";
+    std::string expected = pretty_json("[2, 3, 4]");
+    CHECK(run_jqcpp_test(input, filter) == expected);
+  }
+
+  SECTION("Arithmetic operations") {
+    std::string input = R"({"x": 10, "y": 5})";
+    std::string filter = ".x + .y";
+    std::string expected = "15\n";
+    CHECK(run_jqcpp_test(input, filter) == expected);
+  }
+
+  SECTION("Complex nested structure") {
+    std::string input = R"(
+        {
+            "users": [
+                {"name": "Alice", "scores": [85, 90, 95]},
+                {"name": "Bob", "scores": [80, 85, 90]}
+            ]
+        })";
+    std::string filter = ".users[1].scores[2]";
+    std::string expected = "90\n";
+    CHECK(run_jqcpp_test(input, filter) == expected);
+  }
+
+  SECTION("Length function") {
+    std::string input = R"(["a", "b", "c", "d"])";
+    std::string filter = "length";
+    std::string expected = "4\n";
+    CHECK(run_jqcpp_test(input, filter) == expected);
+  }
+
+  SECTION("Keys function") {
+    std::string input = R"({"a": 1, "b": 2, "c": 3})";
+    std::string filter = "keys";
+    std::string expected = pretty_json(R"(["a", "b", "c"])");
+    CHECK(run_jqcpp_test(input, filter) == expected);
+  }
+
+  SECTION("Error handling - Invalid JSON") {
+    std::string input = R"({"name": "John", "age":})";
+    std::string filter = ".";
+    CHECK_THROWS(run_jqcpp_test(input, filter));
+  }
+
+  SECTION("Error handling - Invalid filter") {
+    std::string input = R"({"name": "John", "age": 30})";
+    std::string filter = ".invalid[";
+    CHECK_THROWS(run_jqcpp_test(input, filter));
   }
 }
