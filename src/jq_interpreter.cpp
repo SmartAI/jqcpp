@@ -60,7 +60,8 @@ int run_jqcpp(int argc, char *argv[], std::istream &input,
     return 0;
   } catch (const std::exception &e) {
     std::cerr << "Error: " << e.what() << std::endl;
-    return 1;
+    throw std::runtime_error("run jqcpp failed: " + std::string(e.what()) +
+                             "\n");
   }
 }
 
