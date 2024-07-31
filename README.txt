@@ -41,3 +41,31 @@ Input Methods:
 Piping JSON data: echo '{"key": "value"}' | jqcpp 'keys'
 Reading from file: jqcpp 'keys'  input.json
 Interactive mode: jqcpp 'keys' (then type JSON and press Ctrl+D)
+
+Expression Syntax:
+Expressions in jqcpp allow you to filter and transform JSON data. Here are some common expression patterns:
+
+Identity: . 
+  Returns the input unchanged
+  Example: echo '{"name": "John"}' | jqcpp '.'
+
+Object Identifier: .foo
+  Retrieve the value associated with a given field name.
+  Example: echo '{"name": "John", "age": 30}' | jqcpp '.name'
+
+Array index: .[<number>] 
+  Retrieves an element from an array by its index.
+  Example: echo '[10, 20, 30]' | jqcpp '.[1]'
+
+Array Slicing: .[start:end]
+  Retrieves a subset of an array.
+  Example: echo '[10, 20, 30, 40]' | jqcpp '.[1:3]' 
+
+Arithmetic Operations: + -
+  Perform arithmetic on numeric values
+  Example: echo '{"x": 10, "y": 5}' | jqcpp '.x + .y'
+
+Built-in Functions: 
+  length: Returns the length of a string, array, or object.
+  keys: Returns an array of an object's keys.
+  Example: echo '{"a": 1, "b": 2}' | jqcpp 'keys' 
