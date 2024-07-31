@@ -4,6 +4,7 @@
 #include "jqcpp/json_parser.hpp"
 #include "jqcpp/json_tokenizer.hpp"
 #include "jqcpp/pretty_printer.hpp"
+#include <fstream>
 #include <iostream>
 
 namespace jqcpp {
@@ -25,27 +26,61 @@ std::string read_json_input(std::istream &input) {
   return json;
 }
 
+void print_version(std::ostream &output) { output << "jqcpp version 1.0.0\n"; }
+
 void print_help(std::ostream &output) {
-  output << "Usage: jqcpp <filter>\n"
-         << "Filters:\n"
-         << "  .key           - Access object property\n"
-         << "  .[index]       - Access array element\n"
-         << "  .[start:end]   - Array slicing\n"
-         << "  .key + value   - Addition operation\n"
-         << "  .key - value   - Subtraction operation\n"
-         << "  length         - Get length of array or string\n"
-         << "  keys           - Get keys of an object\n";
+  output << "Usage: jqcpp [options] <expression> [input-file]\n"
+         << "Options:\n"
+         << "  -h, --help     Display this help information\n"
+         << "  -v, --version  Show version information\n"
+         << "expression:\n"
+         << "  .key           Access object property\n"
+         << "  .[index]       Access array element\n"
+         << "  .[start:end]   Array slicing\n"
+         << "  .key + value   Addition operation\n"
+         << "  .key - value   Subtraction operation\n"
+         << "  length         Get length of array\n"
+         << "  keys           Get keys of an object\n";
 }
 
 int run_jqcpp(int argc, char *argv[], std::istream &input,
               std::ostream &output) {
-  if (argc != 2) {
-    print_help(output);
+  if (argc < 2) {
+    print_help(std::cerr);
     return 1;
   }
+  std::string arg1 = argv[1];
+  if (arg1 == "-h" || arg1 == "--help") {
+    print_help(output);
+    return 0;
+  }
+  if (arg1 == "-v" || arg1 == "--version") {
+    print_version(output);
+    return 0;
+  }
 
-  std::string jq_expr(argv[1]);
-  std::string json_input = read_json_input(input);
+  std::string expression = arg1;
+  std::string input_file;
+  if (argc > 2) {
+    input_file = argv[2];
+  }
+
+  if (expression.empty()) {
+    std::cerr << "Error: No expression provided\n";
+    print_help(output);
+  }
+
+  std::string json_input;
+  if (!input_file.empty()) {
+    std::ifstream ifs(input_file);
+    if (!ifs) {
+      std::cerr << "Error: Cannot open file " << input_file << "\n";
+      return 1;
+    }
+    json_input = read_json_input(ifs);
+  } else {
+    json_input = read_json_input(input);
+  }
 
   try {
     // parse json object
@@ -53,7 +88,7 @@ int run_jqcpp(int argc, char *argv[], std::istream &input,
     json::JSONParser parser;
     auto jvalue = parser.parse(lexer.tokenize(json_input));
 
-    JQInterpreter interpreter(jq_expr);
+    JQInterpreter interpreter(expression);
     auto result = interpreter.execute(jvalue);
     json::JSONPrinter printer;
     output << printer.print(result) << std::endl;
