@@ -6,16 +6,18 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 # Generate compile_commands.json
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
-set(CMAKE_VERBOSE_MAKEFILE true)
+#set(CMAKE_VERBOSE_MAKEFILE true)
 
 include(${CMAKE_SOURCE_DIR}/Sanitizers.cmake)
-
-find_package(Catch2  REQUIRED)
-
-
 include_directories(${PROJECT_SOURCE_DIR}/include)
 
 file(GLOB JQCPP_SOURCES "src/*.cpp")
+
+option(ENABLE_TEST "enable build the tests" OFF)
+if (ENABLE_TEST)
+
+find_package(Catch2  REQUIRED)
+
 
 # JSON Tokenizer test
 add_executable(test_json_tokenizer tests/test_json_tokenizer.cpp src/json_tokenizer.cpp)
@@ -41,10 +43,6 @@ target_link_libraries(test_expression_interpreter PRIVATE Catch2::Catch2WithMain
 add_executable(test_jqcpp tests/test_jqcpp.cpp ${JQCPP_SOURCES})
 target_link_libraries(test_jqcpp PRIVATE Catch2::Catch2WithMain)
 
-#  The app
-add_executable(jqcpp app/main.cpp ${JQCPP_SOURCES})
-add_executable(jqfilter app/expression_repl.cpp ${JQCPP_SOURCES})
-
 
 # Enable testing
 enable_testing()
@@ -65,6 +63,12 @@ add_custom_target(run_tests
             test_expression_interpreter
             test_jqcpp
 )
+
+
+endif() # ENABLE_TEST
+
+#  The app
+add_executable(jqcpp app/main.cpp ${JQCPP_SOURCES})
 
 # Install the hello and goodbye programs.
 install(TARGETS jqcpp DESTINATION bin)

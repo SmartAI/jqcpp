@@ -12,5 +12,13 @@ cmd_dir=$(dirname "$0") || panic "cannot determine command directory"
 
 jqcpp="$cmd_dir/jqcpp"
 
-echo "Running jqcpp prgram"
-$hello_program || panic "hello program failed"
+echo "Running jqcpp help"
+$jqcpp --help || panic "hello program failed"
+
+echo ""
+
+
+echo "======================================================="
+echo "For example, you can run jqcpp like this: "
+echo "echo '{\"name\": \"John\", \"age\": 35}' | $jqcpp '.age + 5'"
+echo '{"name": "John", "age": 35}' | $jqcpp '.age + 5'
