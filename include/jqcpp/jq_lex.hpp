@@ -166,22 +166,29 @@ private:
   }
   Token process_operator_state() {
     static const std::unordered_map<std::string, TokenType> operators = {
-        {".", TokenType::Dot},         {"|", TokenType::Pipe},
-        {"(", TokenType::LeftParen},   {")", TokenType::RightParen},
-        {"[", TokenType::LeftBracket}, {"]", TokenType::RightBracket},
-        {",", TokenType::Comma},       {"=", TokenType::Equals},
-        {";", TokenType::Semicolon},   {"?", TokenType::QuestionMark},
-        {"@", TokenType::At},          {"$", TokenType::Dollar},
-        {"+", TokenType::Plus},        {"-", TokenType::Minus},
-        {"*", TokenType::Multiply},    {"/", TokenType::Divide},
-        {"%", TokenType::Modulo},      {":", TokenType::Colon},
-        {"==", TokenType::EqualEqual}, {"!=", TokenType::NotEqual},
-        {"<", TokenType::Less},        {"<=", TokenType::LessEqual},
-        {">", TokenType::Greater},     {">=", TokenType::GreaterEqual}};
+        {".", TokenType::Dot},
+        {"+", TokenType::Plus},
+        {"-", TokenType::Minus},
+        {"[", TokenType::LeftBracket},
+        {"]", TokenType::RightBracket},
+        {":", TokenType::Colon}
+
+        // TODO: the following operations are not supported currently
+        // {"|", TokenType::Pipe},
+        // {",", TokenType::Comma},       {"=", TokenType::Equals},
+        // {";", TokenType::Semicolon},   {"?", TokenType::QuestionMark},
+        // {"@", TokenType::At},          {"$", TokenType::Dollar},
+        // {"*", TokenType::Multiply},    {"/", TokenType::Divide},
+        // {"%", TokenType::Modulo},      ,
+        // {"==", TokenType::EqualEqual}, {"!=", TokenType::NotEqual},
+        // {"<", TokenType::Less},        {"<=", TokenType::LessEqual},
+        // {">", TokenType::Greater},     {">=", TokenType::GreaterEqual}
+
+    };
     std::string op;
     op += get();
     if (it != end) {
-      // determin whether is a valid two-characters op
+      // determine whether is a valid two-characters op
       std::string potential_op = op + peek();
       if (operators.find(potential_op) != operators.end()) {
         op = potential_op;
@@ -192,7 +199,7 @@ private:
     if (op_it != operators.end()) {
       return Token(op_it->second, op);
     }
-    throw TokenizerError("Unknow operator: " + op);
+    throw TokenizerError("Tokenize Error: Unknow operator: " + op);
   }
 
   bool is_identifier_start(char c) const {

@@ -35,101 +35,9 @@ TEST_CASE("JQLexer basic functionality", "[tokenizer]") {
     CHECK(tokens[0].value == "hello world");
     CHECK(tokens[1].type == TokenType::End);
   }
-
-  SECTION("Operators") {
-    auto tokens = tokenizer.tokenize("+ - * / % == != < <= > >=");
-    CHECK(tokens.size() == 12);
-    CHECK(tokens[0].type == TokenType::Plus);
-    CHECK(tokens[1].type == TokenType::Minus);
-    CHECK(tokens[2].type == TokenType::Multiply);
-    CHECK(tokens[3].type == TokenType::Divide);
-    CHECK(tokens[4].type == TokenType::Modulo);
-    CHECK(tokens[5].type == TokenType::EqualEqual);
-    CHECK(tokens[6].type == TokenType::NotEqual);
-    CHECK(tokens[7].type == TokenType::Less);
-    CHECK(tokens[8].type == TokenType::LessEqual);
-    CHECK(tokens[9].type == TokenType::Greater);
-    CHECK(tokens[10].type == TokenType::GreaterEqual);
-    CHECK(tokens[11].type == TokenType::End);
-  }
 }
 
-TEST_CASE("JQLexer complex expressions", "[tokenizer]") {
-  JQLexer tokenizer;
-
-  SECTION("Complex expression") {
-    auto tokens = tokenizer.tokenize(".foo[123] | .bar == \"test\"");
-    CHECK(tokens.size() == 11);
-    CHECK(tokens[0].type == TokenType::Dot);
-    CHECK(tokens[1].type == TokenType::Identifier);
-    CHECK(tokens[1].value == "foo");
-    CHECK(tokens[2].type == TokenType::LeftBracket);
-    CHECK(tokens[3].type == TokenType::Number);
-    CHECK(tokens[3].value == "123");
-    CHECK(tokens[4].type == TokenType::RightBracket);
-    CHECK(tokens[5].type == TokenType::Pipe);
-    CHECK(tokens[6].type == TokenType::Dot);
-    CHECK(tokens[7].type == TokenType::Identifier);
-    CHECK(tokens[7].value == "bar");
-    CHECK(tokens[8].type == TokenType::EqualEqual);
-    CHECK(tokens[9].type == TokenType::String);
-    CHECK(tokens[9].value == "test");
-    CHECK(tokens[10].type == TokenType::End);
-  }
-
-  SECTION("Minus and Negative") {
-    auto tokens = tokenizer.tokenize(".b-2*2");
-    CHECK(tokens.size() == 7);
-  }
-
-  SECTION("Minus and Negative") {
-    auto tokens = tokenizer.tokenize(".b-2*2");
-    CHECK(tokens.size() == 7); // Including End token
-    CHECK(tokens[0].type == TokenType::Dot);
-    CHECK(tokens[1].type == TokenType::Identifier);
-    CHECK(tokens[1].value == "b");
-    CHECK(tokens[2].type == TokenType::Minus);
-    CHECK(tokens[3].type == TokenType::Number);
-    CHECK(tokens[3].value == "2");
-    CHECK(tokens[4].type == TokenType::Multiply);
-    CHECK(tokens[5].type == TokenType::Number);
-    CHECK(tokens[5].value == "2");
-    CHECK(tokens[6].type == TokenType::End);
-  }
-
-  SECTION("Minus as operator and negative sign") {
-    auto tokens = tokenizer.tokenize("5 - -3 * -2");
-    CHECK(tokens.size() == 8); // Including End token
-    CHECK(tokens[0].type == TokenType::Number);
-    CHECK(tokens[0].value == "5");
-    CHECK(tokens[1].type == TokenType::Minus);
-    CHECK(tokens[2].type == TokenType::Minus);
-    CHECK(tokens[3].type == TokenType::Number);
-    CHECK(tokens[3].value == "3");
-    CHECK(tokens[4].type == TokenType::Multiply);
-    CHECK(tokens[5].type == TokenType::Minus);
-    CHECK(tokens[6].type == TokenType::Number);
-    CHECK(tokens[6].value == "2");
-    CHECK(tokens[7].type == TokenType::End);
-  }
-
-  SECTION("Minus in different contexts") {
-    auto tokens = tokenizer.tokenize("(-5 + 3) - 2");
-    CHECK(tokens.size() == 9); // Including End token
-    CHECK(tokens[0].type == TokenType::LeftParen);
-    CHECK(tokens[1].type == TokenType::Minus);
-    CHECK(tokens[2].type == TokenType::Number);
-    CHECK(tokens[2].value == "5");
-    CHECK(tokens[3].type == TokenType::Plus);
-    CHECK(tokens[4].type == TokenType::Number);
-    CHECK(tokens[4].value == "3");
-    CHECK(tokens[5].type == TokenType::RightParen);
-    CHECK(tokens[6].type == TokenType::Minus);
-    CHECK(tokens[7].type == TokenType::Number);
-    CHECK(tokens[7].value == "2");
-    CHECK(tokens[8].type == TokenType::End);
-  }
-}
+TEST_CASE("JQLexer complex expressions", "[tokenizer]") { JQLexer tokenizer; }
 
 TEST_CASE("JQLexer error handling", "[tokenizer]") {
   JQLexer tokenizer;
@@ -179,18 +87,6 @@ TEST_CASE("JQLexer special cases", "[tokenizer]") {
 
 TEST_CASE("JQLexer tokenizes expressions correctly", "[tokenizer]") {
   JQLexer tokenizer;
-
-  SECTION("Simple tokens") {
-    auto tokens = tokenizer.tokenize(".[],:+-");
-    CHECK(tokens.size() == 8); // Including End token
-    CHECK(tokens[0].type == TokenType::Dot);
-    CHECK(tokens[1].type == TokenType::LeftBracket);
-    CHECK(tokens[2].type == TokenType::RightBracket);
-    CHECK(tokens[3].type == TokenType::Comma);
-    CHECK(tokens[4].type == TokenType::Colon);
-    CHECK(tokens[5].type == TokenType::Plus);
-    CHECK(tokens[6].type == TokenType::Minus);
-  }
 
   SECTION("Identifiers and numbers") {
     auto tokens = tokenizer.tokenize("abc 123 _def45");
