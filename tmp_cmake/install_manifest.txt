@@ -1,2 +1,0 @@
-/home/max/.local/bin/jqcpp
-/home/max/.local/bin/demo

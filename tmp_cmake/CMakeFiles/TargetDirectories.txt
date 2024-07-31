@@ -1,7 +1,0 @@
-/home/max/workspace/cppcourse/cpp_project-minliu/tmp_cmake/CMakeFiles/jqcpp.dir
-/home/max/workspace/cppcourse/cpp_project-minliu/tmp_cmake/CMakeFiles/edit_cache.dir
-/home/max/workspace/cppcourse/cpp_project-minliu/tmp_cmake/CMakeFiles/rebuild_cache.dir
-/home/max/workspace/cppcourse/cpp_project-minliu/tmp_cmake/CMakeFiles/list_install_components.dir
-/home/max/workspace/cppcourse/cpp_project-minliu/tmp_cmake/CMakeFiles/install.dir
-/home/max/workspace/cppcourse/cpp_project-minliu/tmp_cmake/CMakeFiles/install/local.dir
-/home/max/workspace/cppcourse/cpp_project-minliu/tmp_cmake/CMakeFiles/install/strip.dir
