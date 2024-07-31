@@ -148,15 +148,24 @@ json::JSONValue JQEvaluator::visitLength(const LengthNode &node) {
 }
 
 json::JSONValue JQEvaluator::visitKeys(const KeysNode &node) {
-  if (!currentContext().is_object()) {
-    throw std::runtime_error("Keys is only supported for objects");
+  if (currentContext().is_array()) {
+    const auto &arr = currentContext().get_array();
+    json::JSONArray keys;
+    for (std::size_t i = 0; i < arr.size(); ++i) {
+      keys.push_back(json::JSONValue(static_cast<double>(i)));
+    }
+    return json::JSONValue(std::move(keys));
+
+  } else if (currentContext().is_object()) {
+    const auto &obj = currentContext().get_object();
+    json::JSONArray keys;
+    for (const auto &[key, value] : obj) {
+      keys.push_back(json::JSONValue(key));
+    }
+    return json::JSONValue(std::move(keys));
+  } else {
+    throw std::runtime_error("Keys is only supported for objects or arrays");
   }
-  const auto &obj = currentContext().get_object();
-  json::JSONArray keys;
-  for (const auto &[key, value] : obj) {
-    keys.push_back(json::JSONValue(key));
-  }
-  return json::JSONValue(std::move(keys));
 }
 
 json::JSONValue JQEvaluator::visitPipe(const PipeNode &node) {
